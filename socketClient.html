@@ -1,0 +1,284 @@
+<style>
+    :root {
+        --light-color: #f5f5f5;
+        --dark-color: rgb(150, 180, 234);
+        /*--dark-color: rgb(150, 150, 200);*/
+        --almost-black: #00a;
+    }
+
+    body {
+        font-family: monospace;
+        font-size: 16px;
+        color: var(--almost-black);
+    }
+
+    .lobby-container {
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    #game-list {
+        height: 450px;
+        border: 1px solid var(--almost-black);
+        margin-top: 5px;
+        padding: 15px 15px;
+        overflow: auto;
+    }
+
+    .game-item:not(:first-child) {
+        margin-top: 5px;
+    }
+
+    .lobby-controls {
+        margin-top: 10px;
+    }
+
+    .population-text {
+        float: right;
+    }
+
+    button {
+        border: 1px solid var(--almost-black);
+        background: none;
+        font: inherit;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .game-item:hover,
+    button:hover {
+        background: var(--light-color);
+    }
+
+    .game-item.selected,
+    button:active {
+        background: var(--dark-color);
+        color: white;
+    }
+</style>
+
+<div class="lobby-container">
+    <div class="title">Lobby</div>
+    <div id="game-list">
+        <!--e.g. <div class="game-item selected" gameId="###'>game 1</div>-->
+    </div>
+    <div class="lobby-controls">
+        <button id="create-game-button">create game</button>
+        <button id="join-game-button">join game</button>
+        <span class="population-text"><span id="population-count-text"></span> clients in lobby</span>
+    </div>
+</div>
+
+<div>
+    <canvas width=500 height=500></canvas>
+</div>
+
+<script>
+	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
+	const SERVER_URL = 'ws://PlumpVibrantDirectory--five-nine.repl.co';
+
+	const newPromise = () => {
+		let resolve, reject;
+		let promise = new Promise((res, rej) => {
+			resolve = res;
+			reject = rej;
+		});
+		promise.resolve = resolve;
+		promise.reject = reject;
+		return promise;
+	};
+
+	class View {
+		constructor() {
+			this.$ = query => document.querySelector(query);
+		}
+
+		addCreateGameListener(listener) {
+			this.$('#create-game-button').addEventListener('click', () => listener());
+		}
+
+		addJoinGameListener(listener) {
+			this.$('#join-game-button').addEventListener('click', () => listener(this.selectedGameId));
+		}
+
+		updateLobby(population, games) {
+			this.$('#population-count-text').textContent = population;
+
+			let gameList = this.$('#game-list');
+			for (let i = gameList.childElementCount; i < games.length; i++) {
+				let gameItem = document.createElement('div');
+				gameItem.classList.add('game-item');
+				gameItem.addEventListener('click', () => this.selectedGameId = gameItem.gameId);
+				gameList.appendChild(gameItem)
+			}
+			while (gameList.childElementCount > games.length)
+				gameList.lastChild.remove();
+
+			games.forEach(({id, population, status}, i) => {
+				let gameItem = gameList.children[i];
+				gameItem.gameId = id;
+				gameItem.textContent = `${id} - ${population} players - ${status}`;
+				gameItem.classList.toggle('selected', id === this.selectedGameId)
+			});
+		};
+	}
+
+	const INPUT_STATE_ENUM = {
+		RELEASED: 1,
+		PRESSED: 2,
+		TAPPED: 3
+	};
+
+	class Inputs {
+		constructor() {
+			this.resetAccumulatedInputs();
+		}
+
+		resetAccumulatedInputs() {
+			this.accumulatedInputs = {
+				keys: {},
+				mouse: {},
+			};
+		}
+
+		accumulateKeyInput(input) {
+			Object.entries(input).forEach(([key, value]) => {
+				if (value !== INPUT_STATE_ENUM.RELEASED)
+					this.accumulatedInputs.keys[key] = value;
+
+				// null -> release
+				// release -> release
+				// pressed -> tapped
+				// tapped -> tapped
+				else if (this.accumulatedInputs.keys[key] === INPUT_STATE_ENUM.PRESSED)
+					this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.TAPPED;
+				else if (!this.accumulatedInputs.keys[key])
+					this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.RELEASED;
+			});
+		}
+
+		accumulateMouseInput(x, y) {
+			this.accumulatedInputs.mouse = {x, y};
+		}
+
+		getInputs() {
+			let accumulatedInputs = this.accumulatedInputs;
+			this.resetAccumulatedInputs();
+			return accumulatedInputs;
+		}
+	}
+
+	class GameState {
+		constructor() {
+
+		}
+
+		update(data) {
+			this.state = data;
+			this.draw();
+		}
+
+		draw() {
+			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+			canvasCtx.fillStyle = 'rgb(100, 200, 255)';
+			let tileWidth = canvas.width / this.state.width;
+			let tileHeight = canvas.height / this.state.height;
+			for (let x = 0; x < this.state.width; x++)
+				for (let y = 0; y < this.state.height; y++)
+					if (this.state.board[x][y])
+						canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+		}
+	}
+
+	class Controller {
+		constructor(mouseTarget) {
+			this.mouseTarget = mouseTarget;
+
+			document.addEventListener('keydown', ({key, repeat}) =>
+				!repeat && inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.PRESSED}));
+
+			document.addEventListener('keyup', ({key}) =>
+				inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.RELEASED}));
+
+			document.addEventListener('mousemove', ({x, y}) =>
+				this.mouseInput(x, y));
+
+			document.addEventListener('mousedown', ({x, y}) => {
+				this.mouseInput(x, y);
+				inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.PRESSED});
+			});
+
+			document.addEventListener('mouseup', ({x, y}) => {
+				this.mouseInput(x, y);
+				inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.RELEASED});
+			});
+		}
+
+		mouseInput(x, y) {
+			inputs.accumulateMouseInput((x - this.mouseTarget.offsetLeft) / this.mouseTarget.width,
+				(y - this.mouseTarget.offsetTop) / this.mouseTarget.height);
+		}
+	}
+
+	class NetClient {
+		constructor(serverUrl, messageHandler) {
+			this.opened = newPromise();
+			this.serverSocket = new WebSocket(serverUrl);
+			this.serverSocket.addEventListener('open', () => this.opened.resolve());
+			this.serverSocket.addEventListener('message', ({data}) => {
+				try {
+					messageHandler(JSON.parse(data));
+				} catch (e) {
+				}
+			});
+		}
+
+		async send(data) {
+			let stringData = JSON.stringify(data);
+			console.log('send', stringData);
+			await this.opened;
+			this.serverSocket.send(stringData);
+		}
+	}
+
+	let canvas = document.querySelector('canvas');
+	let canvasCtx = canvas.getContext('2d');
+	let gameState = new GameState();
+	let inputs = new Inputs();
+	let controller = new Controller(canvas);
+	let view = new View();
+	let clientId;
+	let netClient = new NetClient(SERVER_URL, message => {
+		switch (message.type) {
+			case 'created-client':
+				clientId = message.clientId;
+				netClient.send({type: 'join-lobby', clientId});
+				break;
+			case 'created-game':
+				console.log('created game:', message.gameId);
+				break;
+			case 'lobby':
+				view.updateLobby(message.population, message.games);
+				break;
+			default:
+				console.warn('unrecognized message type:', message.type);
+		}
+	});
+	view.addCreateGameListener(() => netClient.send({
+		type: 'create-game',
+		clientId
+	}));
+	view.addJoinGameListener(gameId => netClient.send({
+		type: 'join-game',
+		clientId,
+		gameId
+	}));
+
+	window.addEventListener('load', () =>
+		netClient.send({type: 'create-client'}));
+</script>
