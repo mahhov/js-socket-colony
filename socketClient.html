@@ -79,7 +79,19 @@
 
 <script>
 	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
-	const SERVER_URL = 'ws://PlumpVibrantDirectory--five-nine.repl.co';
+	const SERVER_URL = 'ws://HightechMixedHypermedia--five-nine.repl.co';
+
+	const GAME_STATE_ENUM = {
+		WAITING_FOR_PLAYERS: 0,
+		IN_PROGRESS: 1,
+		ENDED: 2,
+	};
+
+	const INPUT_STATE_ENUM = {
+		RELEASED: 1,
+		PRESSED: 2,
+		TAPPED: 3
+	};
 
 	const newPromise = () => {
 		let resolve, reject;
@@ -118,20 +130,27 @@
 			while (gameList.childElementCount > games.length)
 				gameList.lastChild.remove();
 
-			games.forEach(({id, population, status}, i) => {
+			games.forEach(({id, population, state}, i) => {
 				let gameItem = gameList.children[i];
 				gameItem.gameId = id;
-				gameItem.textContent = `${id} - ${population} players - ${status}`;
+				gameItem.textContent = `${id}: ${View.getGameStateText(state)} (${population} / ${2} players)`; // todo don't hardcode 2
 				gameItem.classList.toggle('selected', id === this.selectedGameId)
 			});
 		};
-	}
 
-	const INPUT_STATE_ENUM = {
-		RELEASED: 1,
-		PRESSED: 2,
-		TAPPED: 3
-	};
+		static getGameStateText(state) {
+			switch (state) {
+				case GAME_STATE_ENUM.WAITING_FOR_PLAYERS:
+					return 'waiting for players';
+				case GAME_STATE_ENUM.IN_PROGRESS:
+					return 'game in progress';
+				case GAME_STATE_ENUM.ENDED:
+					return 'game ended';
+				default:
+					console.warn('unrecognized game state:', state);
+			}
+		}
+	}
 
 	class Inputs {
 		constructor() {
@@ -177,21 +196,25 @@
 
 		}
 
-		update(data) {
-			this.state = data;
+		setData(data) {
+			this.data = data;
 			this.draw();
 		}
 
 		draw() {
 			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-			canvasCtx.fillStyle = 'rgb(100, 200, 255)';
 			let tileWidth = canvas.width / this.state.width;
 			let tileHeight = canvas.height / this.state.height;
-			for (let x = 0; x < this.state.width; x++)
-				for (let y = 0; y < this.state.height; y++)
-					if (this.state.board[x][y])
+			for (let x = 0; x < this.data.width; x++)
+				for (let y = 0; y < this.data.height; y++)
+					if (this.data.board[x][y] === 1) {
+						if (this.data.board[x][y] === 1)
+							canvasCtx.fillStyle = 'rgb(100, 200, 255)';
+						else
+							canvasCtx.fillStyle = 'rgb(255, 200, 100)';
 						canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+					}
 		}
 	}
 
@@ -240,7 +263,8 @@
 
 		async send(data) {
 			let stringData = JSON.stringify(data);
-			console.log('send', stringData);
+			if (!data.repeat || Math.random() > .99)
+				console.log('send', stringData);
 			await this.opened;
 			this.serverSocket.send(stringData);
 		}
@@ -252,18 +276,23 @@
 	let inputs = new Inputs();
 	let controller = new Controller(canvas);
 	let view = new View();
-	let clientId;
+	let client = {clientId: null, gameId: null};
 	let netClient = new NetClient(SERVER_URL, message => {
+		if (!message.repeat || Math.random() > .99)
+			console.log('received', message);
 		switch (message.type) {
 			case 'created-client':
-				clientId = message.clientId;
-				netClient.send({type: 'join-lobby', clientId});
+				client.clientId = message.clientId;
+				netClient.send({type: 'join-lobby', clientId: client.clientId});
 				break;
 			case 'created-game':
-				console.log('created game:', message.gameId);
+				client.gameId = message.gameId;
 				break;
 			case 'lobby':
 				view.updateLobby(message.population, message.games);
+				break;
+			case 'game':
+				gameState.setData(message.data);
 				break;
 			default:
 				console.warn('unrecognized message type:', message.type);
@@ -271,14 +300,33 @@
 	});
 	view.addCreateGameListener(() => netClient.send({
 		type: 'create-game',
-		clientId
+		clientId: client.clientId
 	}));
-	view.addJoinGameListener(gameId => netClient.send({
-		type: 'join-game',
-		clientId,
-		gameId
-	}));
+	view.addJoinGameListener(gameId => {
+		netClient.send({
+			type: 'join-game',
+			clientId: client.clientId,
+			gameId
+		});
+		client.gameId = gameId;
+	});
 
 	window.addEventListener('load', () =>
 		netClient.send({type: 'create-client'}));
+
+	setInterval(() => {
+		if (client.gameId)
+			netClient.send({
+				type: 'input-game',
+				repeat: true,
+				clientId: client.clientId,
+				gameId: client.gameId,
+				input: inputs.getInputs(),
+			});
+	}, SEND_INPUTS_PERIOD_MS);
+
+	// todo send input-game
+	// todo send leave-game
+	// todo indicate clientId and gameId (or names)
+	// todo heartbeat for lobby count
 </script>

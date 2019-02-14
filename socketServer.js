@@ -115,14 +115,16 @@ class Game {
 		this.board = Array(width).fill().map(() => Array(height).fill(0));
 	}
 
-	update() {
-		inputs.applyAccumulatedInputs();
-		let mouseInput = this.getMouseInput();
-		if (mouseInput)
-			this.board[mouseInput.x][mouseInput.y] = 1;
+	update(inputsList) {
+		inputsList.forEach((inputs, i) => {
+			inputs.applyAccumulatedInputs();
+			let mouseInput = this.getMouseInput(inputs);
+			if (mouseInput)
+				this.board[mouseInput.x][mouseInput.y] = i;
+		});
 	}
 
-	getMouseInput() {
+	getMouseInput(inputs) {
 		if (!inputs.isTriggered(KEY_ENUM.MOUSE))
 			return;
 		let x = parseInt(this.width * inputs.mouse.x);
@@ -153,6 +155,8 @@ class Net {
 	}
 
 	send(clients, data) {
+		if (!data.repeat || Math.random() > .99)
+			console.log('send', data);
 		let stringData = JSON.stringify(data);
 		clients
 			.filter(client => client.readyState === WebSocket.OPEN)
@@ -198,12 +202,9 @@ class Server {
 			id,
 			clients: [],
 			requiredClients: NUM_CLIENTS_PER_GAME,
-			state:
-			inputsList
-	:
-		[],
-	})
-		;
+			state: GAME_STATE_ENUM.WAITING_FOR_PLAYERS,
+			inputsList: [],
+		});
 		this.joinGame(clientId, id);
 		return id;
 	}
@@ -215,9 +216,9 @@ class Server {
 		if (!game || game.clients.includes(clientId))
 			return;
 		game.clients.push(clientId);
-		game.inputs.push(new Inputs());
+		game.inputsList.push(new Inputs());
 		if (game.clients.length === NUM_CLIENTS_PER_GAME) {
-			game.status = 'In progress';
+			game.state = GAME_STATE_ENUM.IN_PROGRESS;
 			game.game = new Game(10, 10);
 		}
 	}
@@ -231,7 +232,7 @@ class Server {
 		game.clients = game.clients.filter(id => id !== clientId);
 	}
 
-	inputGame(clientId, input) {
+	inputGame(clientId, gameId, input) {
 		if (!this.findClient(clientId))
 			return;
 		let game = this.findGame(gameId);
@@ -240,7 +241,7 @@ class Server {
 		let clientIndex = game.clients.indexOf(clientId);
 		if (clientIndex === -1)
 			return;
-		game.inputs[clientIndex].accumulateInputs(input)
+		game.inputsList[clientIndex].accumulateInput(input)
 	}
 
 	getLobbyNetClients() {
@@ -257,10 +258,10 @@ class Server {
 }
 
 let game = new Game(10, 10);
-let inputs = new Inputs();
 let server = new Server();
 let net = new Net(3003, (client, message) => {
-	console.log('received', message);
+	if (!message.repeat || Math.random() > .99)
+		console.log('received', message);
 	switch (message.type) {
 		case 'create-client':
 			let clientId = server.createClient(client);
@@ -280,28 +281,33 @@ let net = new Net(3003, (client, message) => {
 			server.leaveGame(message.clientId, message.gameId);
 			break;
 		case 'input-game':
-			server.inputGame(message.clientId, message.input);
+			server.inputGame(message.clientId, message.gameId, message.input);
 			break;
 		default:
 			console.warn('unrecognized message type:', message.type);
 	}
-
-	inputs.accumulateInput(message);
 });
 
 setInterval(() => {
 	net.send(server.getLobbyNetClients(), {
 		type: 'lobby',
+		repeat: true,
 		population: server.clients.length,
-		games: server.games.map(({id, clients, status}) => ({
+		games: server.games.map(({id, clients, state}) => ({
 			id,
 			population: clients.length,
-			status
+			state,
 		}))
 	});
 
-	server.games.forEach(game => {
-		// update game
-		// broadcas game
-	});
+	server.games
+		.filter(({state}) => state === GAME_STATE_ENUM.IN_PROGRESS)
+		.forEach(({id, inputsList, game}) => {
+			game.update(inputsList);
+			net.send(server.getGameClients(id), {
+				type: 'game',
+				repeat: true,
+				data: game.getStateDiff()
+			});
+		});
 }, UPDATE_GAME_PERIOD_MS);
