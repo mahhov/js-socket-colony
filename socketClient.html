@@ -35,8 +35,9 @@
         overflow: auto;
     }
 
-    .game-item:not(:first-child) {
-        margin-top: 5px;
+    .game-item {
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
 
     .lobby-controls {
@@ -144,7 +145,8 @@
 			for (let i = gameList.childElementCount; i < games.length; i++) {
 				let gameItem = document.createElement('div');
 				gameItem.classList.add('game-item');
-				gameItem.addEventListener('click', () => this.selectedGameId = gameItem.gameId);
+				gameItem.addEventListener('click', () =>
+					this.updateLobbySelected(gameItem));
 				gameList.appendChild(gameItem)
 			}
 			while (gameList.childElementCount > games.length)
@@ -154,9 +156,14 @@
 				let gameItem = gameList.children[i];
 				gameItem.gameId = id;
 				gameItem.textContent = `${id}: ${View.getGameStateText(state)} (${population} / ${2} players)`; // todo don't hardcode 2
-				gameItem.classList.toggle('selected', id === this.selectedGameId)
 			});
 		};
+
+		updateLobbySelected(selectedGameItem) {
+			this.selectedGameId = selectedGameItem.gameId;
+			[...this.$('#game-list').children].forEach(gameItem =>
+				gameItem.classList.toggle('selected', gameItem === selectedGameItem));
+		}
 
 		static getGameStateText(state) {
 			switch (state) {
@@ -363,5 +370,4 @@
 	// todo hover tiile
 	// todo scores
 	// todo hover print current turn
-    // todo lobby select gmae delay
 </script>
