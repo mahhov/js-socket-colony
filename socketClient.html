@@ -299,8 +299,7 @@
 
 		async send(data) {
 			let stringData = JSON.stringify(data);
-			if (!data.repeat || Math.random() > .99)
-				await this.opened;
+			await this.opened;
 			this.serverSocket.send(stringData);
 		}
 	}
@@ -313,27 +312,26 @@
 	let view = new View();
 	let client = {clientId: null, gameId: newPromise()};
 	let netClient = new NetClient(SERVER_URL, message => {
-		if (!message.repeat || Math.random() > .99)
-			switch (message.type) {
-				case 'created-client':
-					client.clientId = message.clientId;
-					netClient.send({
-						type: 'join-lobby',
-						clientId: client.clientId
-					});
-					break;
-				case 'created-game':
-					client.gameId.resolve(message.gameId);
-					break;
-				case 'lobby':
-					view.updateLobby(message.population, message.games);
-					break;
-				case 'game':
-					gameState.setData(message.data);
-					break;
-				default:
-					console.warn('unrecognized message type:', message.type);
-			}
+		switch (message.type) {
+			case 'created-client':
+				client.clientId = message.clientId;
+				netClient.send({
+					type: 'join-lobby',
+					clientId: client.clientId
+				});
+				break;
+			case 'created-game':
+				client.gameId.resolve(message.gameId);
+				break;
+			case 'lobby':
+				view.updateLobby(message.population, message.games);
+				break;
+			case 'game':
+				gameState.setData(message.data);
+				break;
+			default:
+				console.warn('unrecognized message type:', message.type);
+		}
 	});
 	view.addCreateGameListener(() => netClient.send({
 		type: 'create-game',
