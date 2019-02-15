@@ -127,7 +127,6 @@ class Game {
 		if (!mouseInput)
 			return;
 		let tile = this.board[mouseInput.x][mouseInput.y];
-		console.log('mouseInput', mouseInput, 'turn', this.turn, 'selected', this.selected, 'tile', tile)
 		if (tile === this.turn + 1)
 			this.selected = mouseInput;
 		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 1)) {
@@ -145,16 +144,15 @@ class Game {
 	}
 
 	propagate(point, tile) {
-		console.log('propogate')
 		for (let x = point.x - 1; x <= point.x + 1; x++)
 			for (let y = point.y - 1; y <= point.y + 1; y++)
 				if (this.inBounds(x, y) && this.board[x][y])
-					this.board[x][y] = tile
+					this.board[x][y] = tile;
+		this.board[point.x][point.y] = tile
 	}
 
 	remove(point) {
-		console.log('remove')
-		this.board[ponit.x][ponit.y] = 0;
+		this.board[point.x][point.y] = 0;
 	}
 
 	inBounds(x, y) {
@@ -162,7 +160,6 @@ class Game {
 	}
 
 	changeTurn() {
-		console.log('change turn')
 		this.turn = ++this.turn % 2;
 		this.selected = {};
 	}
@@ -192,6 +189,7 @@ class Game {
 class Net {
 	constructor(port, messageHandler) {
 		this.wss = new WebSocket.Server({port});
+		console.log('port:', port);
 		this.wss.on('connection', ws => ws.on('message', message => {
 			try {
 				messageHandler(ws, JSON.parse(message));

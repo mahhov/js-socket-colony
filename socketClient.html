@@ -65,10 +65,6 @@
         background: var(--dark-color);
         color: white;
     }
-
-    canvas {
-        border: 1px solid var(--almost-black);
-    }
 </style>
 
 <div class="container">
@@ -85,12 +81,14 @@
         </div>
     </div>
 
-    <canvas width=500 height=500></canvas>
+    <div class="game-container">
+        <canvas width=500 height=500></canvas>
+    </div>
 </div>
 
 <script>
 	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
-	const SERVER_URL = 'ws://SalmonAshamedDesigner--five-nine.repl.co';
+	const SERVER_URL = 'ws://localhost:3003';
 
 	const GAME_STATE_ENUM = {
 		WAITING_FOR_PLAYERS: 0,
@@ -131,12 +129,12 @@
 
 		lobbyMode() {
 			this.$('.lobby-container').hidden = false;
-			this.$('canvas').hidden = true;
+			this.$('.game-container').hidden = true;
 		}
 
 		gameMode() {
 			this.$('.lobby-container').hidden = true;
-			this.$('canvas').hidden = false;
+			this.$('.game-container').hidden = false;
 		}
 
 		updateLobby(population, games) {
@@ -231,14 +229,21 @@
 			for (let x = 0; x < this.data.width; x++)
 				for (let y = 0; y < this.data.height; y++) {
 					let tile = this.data.board[x][y];
-					if (!tile)
-						continue;
-					if (this.data.board[x][y] === 1)
-						canvasCtx.fillStyle = 'rgb(100, 200, 255)';
-					else
-						canvasCtx.fillStyle = 'rgb(255, 200, 100)';
+					let selected = tile ?
+						x === this.data.selected.x && y === this.data.selected.y :
+						(x + y) % 2;
+					let color = GameState.getColor(tile, selected);
+					canvasCtx.fillStyle = `rgb(${color})`;
 					canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
 				}
+		}
+
+		static getColor(tile, selected) {
+			const COLORS = [
+				[[200, 200, 200], [230, 230, 230]], // background
+				[[91, 69, 115], [152, 137, 167]], // player 1, normal & light
+				[[170, 165, 96], [247, 244, 200]]]; // player 2, normal & light
+			return COLORS[tile][selected + 0]; // +0 to convert bool to int
 		}
 	}
 
@@ -355,4 +360,8 @@
 	// todo send leave-game
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
+	// todo hover tiile
+	// todo scores
+	// todo hover print current turn
+    // todo lobby select gmae delay
 </script>
