@@ -109,19 +109,62 @@ class Inputs {
 }
 
 class Game {
-	constructor(width, height) {
+	constructor(width = 20, height = 20) {
 		this.width = width;
 		this.height = height;
 		this.board = Array(width).fill().map(() => Array(height).fill(0));
+		this.board[0][0] = 1;
+		this.board[width - 1][height - 1] = 2;
+		this.turn = 0;
+		this.selected = {};
 	}
 
 	update(inputsList) {
-		inputsList.forEach((inputs, i) => {
-			inputs.applyAccumulatedInputs();
-			let mouseInput = this.getMouseInput(inputs);
-			if (mouseInput)
-				this.board[mouseInput.x][mouseInput.y] = i;
-		});
+		inputsList.forEach((inputs, i) =>
+			inputs.applyAccumulatedInputs());
+
+		let mouseInput = this.getMouseInput(inputsList[this.turn]);
+		if (!mouseInput)
+			return;
+		let tile = this.board[mouseInput.x][mouseInput.y];
+		console.log('mouseInput', mouseInput, 'turn', this.turn, 'selected', this.selected, 'tile', tile)
+		if (tile === this.turn + 1)
+			this.selected = mouseInput;
+		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 1)) {
+			this.propagate(mouseInput, this.turn + 1);
+			this.changeTurn();
+		} else if (tile === 0 && Game.areNear(mouseInput, this.selected, 2)) {
+			this.propagate(mouseInput, this.turn + 1);
+			this.remove(this.selected);
+			this.changeTurn();
+		}
+	}
+
+	static areNear(p1, p2, dist) {
+		return Math.abs(p1.x - p2.x) <= dist && Math.abs(p1.y - p2.y) <= dist;
+	}
+
+	propagate(point, tile) {
+		console.log('propogate')
+		for (let x = point.x - 1; x <= point.x + 1; x++)
+			for (let y = point.y - 1; y <= point.y + 1; y++)
+				if (this.inBounds(x, y) && this.board[x][y])
+					this.board[x][y] = tile
+	}
+
+	remove(point) {
+		console.log('remove')
+		this.board[ponit.x][ponit.y] = 0;
+	}
+
+	inBounds(x, y) {
+		return x >= 0 && x < this.width && y >= 0 && y < this.height;
+	}
+
+	changeTurn() {
+		console.log('change turn')
+		this.turn = ++this.turn % 2;
+		this.selected = {};
 	}
 
 	getMouseInput(inputs) {
@@ -135,11 +178,14 @@ class Game {
 	}
 
 	getStateDiff() {
-		return {
-			width: this.width,
-			height: this.height,
-			board: this.board,
-		};
+		return this;
+		// return {
+		// 	width: this.width,
+		// 	height: this.height,
+		// 	board: this.board,
+		// 	turn: this.turn,
+		// 	selected: this.selected,
+		// };
 	}
 }
 
@@ -155,8 +201,6 @@ class Net {
 	}
 
 	send(clients, data) {
-		if (!data.repeat || Math.random() > .99)
-			console.log('send', data);
 		let stringData = JSON.stringify(data);
 		clients
 			.filter(client => client.readyState === WebSocket.OPEN)
@@ -171,7 +215,7 @@ class Server {
 		this.clients = [];
 	}
 
-	get randId() {
+	static get randId() {
 		return parseInt(Math.random() * 1e15) + 1;
 	}
 
@@ -184,7 +228,7 @@ class Server {
 	}
 
 	createClient(netClient) {
-		let id = this.randId;
+		let id = Server.randId;
 		this.clients.push({id, netClient});
 		return id;
 	}
@@ -197,7 +241,7 @@ class Server {
 	createAndJoinGame(clientId) {
 		if (!this.findClient(clientId))
 			return;
-		let id = this.randId;
+		let id = Server.randId;
 		this.games.push({
 			id,
 			clients: [],
@@ -219,7 +263,7 @@ class Server {
 		game.inputsList.push(new Inputs());
 		if (game.clients.length === NUM_CLIENTS_PER_GAME) {
 			game.state = GAME_STATE_ENUM.IN_PROGRESS;
-			game.game = new Game(10, 10);
+			game.game = new Game();
 		}
 	}
 
@@ -257,11 +301,8 @@ class Server {
 	}
 }
 
-let game = new Game(10, 10);
 let server = new Server();
 let net = new Net(3003, (client, message) => {
-	if (!message.repeat || Math.random() > .99)
-		console.log('received', message);
 	switch (message.type) {
 		case 'create-client':
 			let clientId = server.createClient(client);
@@ -302,11 +343,12 @@ setInterval(() => {
 
 	server.games
 		.filter(({state}) => state === GAME_STATE_ENUM.IN_PROGRESS)
-		.forEach(({id, inputsList, game}) => {
+		.forEach(({id, clients, inputsList, game}) => {
 			game.update(inputsList);
 			net.send(server.getGameClients(id), {
 				type: 'game',
 				repeat: true,
+				clientIds: clients,
 				data: game.getStateDiff()
 			});
 		});

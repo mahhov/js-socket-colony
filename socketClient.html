@@ -12,9 +12,15 @@
         color: var(--almost-black);
     }
 
+    .container {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+
     .lobby-container {
-        max-width: 600px;
-        margin: auto;
+        width: 600px;
     }
 
     .title {
@@ -59,27 +65,32 @@
         background: var(--dark-color);
         color: white;
     }
+
+    canvas {
+        border: 1px solid var(--almost-black);
+    }
 </style>
 
-<div class="lobby-container">
-    <div class="title">Lobby</div>
-    <div id="game-list">
-        <!--e.g. <div class="game-item selected" gameId="###'>game 1</div>-->
+<div class="container">
+    <div class="lobby-container">
+        <div class="title">Lobby</div>
+        <div id="game-list">
+            <!--e.g. <div class="game-item selected" gameId="###'>game 1</div>-->
+        </div>
+        <div class="lobby-controls">
+            <button id="create-game-button">create game</button>
+            <button id="join-game-button">join game</button>
+            <span class="population-text"><span
+                    id="population-count-text"></span> clients in lobby</span>
+        </div>
     </div>
-    <div class="lobby-controls">
-        <button id="create-game-button">create game</button>
-        <button id="join-game-button">join game</button>
-        <span class="population-text"><span id="population-count-text"></span> clients in lobby</span>
-    </div>
-</div>
 
-<div>
     <canvas width=500 height=500></canvas>
 </div>
 
 <script>
 	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
-	const SERVER_URL = 'ws://HightechMixedHypermedia--five-nine.repl.co';
+	const SERVER_URL = 'ws://SalmonAshamedDesigner--five-nine.repl.co';
 
 	const GAME_STATE_ENUM = {
 		WAITING_FOR_PLAYERS: 0,
@@ -107,6 +118,7 @@
 	class View {
 		constructor() {
 			this.$ = query => document.querySelector(query);
+			this.lobbyMode();
 		}
 
 		addCreateGameListener(listener) {
@@ -115,6 +127,16 @@
 
 		addJoinGameListener(listener) {
 			this.$('#join-game-button').addEventListener('click', () => listener(this.selectedGameId));
+		}
+
+		lobbyMode() {
+			this.$('.lobby-container').hidden = false;
+			this.$('canvas').hidden = true;
+		}
+
+		gameMode() {
+			this.$('.lobby-container').hidden = true;
+			this.$('canvas').hidden = false;
 		}
 
 		updateLobby(population, games) {
@@ -204,17 +226,19 @@
 		draw() {
 			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-			let tileWidth = canvas.width / this.state.width;
-			let tileHeight = canvas.height / this.state.height;
+			let tileWidth = canvas.width / this.data.width;
+			let tileHeight = canvas.height / this.data.height;
 			for (let x = 0; x < this.data.width; x++)
-				for (let y = 0; y < this.data.height; y++)
-					if (this.data.board[x][y] === 1) {
-						if (this.data.board[x][y] === 1)
-							canvasCtx.fillStyle = 'rgb(100, 200, 255)';
-						else
-							canvasCtx.fillStyle = 'rgb(255, 200, 100)';
-						canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-					}
+				for (let y = 0; y < this.data.height; y++) {
+					let tile = this.data.board[x][y];
+					if (!tile)
+						continue;
+					if (this.data.board[x][y] === 1)
+						canvasCtx.fillStyle = 'rgb(100, 200, 255)';
+					else
+						canvasCtx.fillStyle = 'rgb(255, 200, 100)';
+					canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+				}
 		}
 	}
 
@@ -264,8 +288,7 @@
 		async send(data) {
 			let stringData = JSON.stringify(data);
 			if (!data.repeat || Math.random() > .99)
-				console.log('send', stringData);
-			await this.opened;
+				await this.opened;
 			this.serverSocket.send(stringData);
 		}
 	}
@@ -276,27 +299,29 @@
 	let inputs = new Inputs();
 	let controller = new Controller(canvas);
 	let view = new View();
-	let client = {clientId: null, gameId: null};
+	let client = {clientId: null, gameId: newPromise()};
 	let netClient = new NetClient(SERVER_URL, message => {
 		if (!message.repeat || Math.random() > .99)
-			console.log('received', message);
-		switch (message.type) {
-			case 'created-client':
-				client.clientId = message.clientId;
-				netClient.send({type: 'join-lobby', clientId: client.clientId});
-				break;
-			case 'created-game':
-				client.gameId = message.gameId;
-				break;
-			case 'lobby':
-				view.updateLobby(message.population, message.games);
-				break;
-			case 'game':
-				gameState.setData(message.data);
-				break;
-			default:
-				console.warn('unrecognized message type:', message.type);
-		}
+			switch (message.type) {
+				case 'created-client':
+					client.clientId = message.clientId;
+					netClient.send({
+						type: 'join-lobby',
+						clientId: client.clientId
+					});
+					break;
+				case 'created-game':
+					client.gameId.resolve(message.gameId);
+					break;
+				case 'lobby':
+					view.updateLobby(message.population, message.games);
+					break;
+				case 'game':
+					gameState.setData(message.data);
+					break;
+				default:
+					console.warn('unrecognized message type:', message.type);
+			}
 	});
 	view.addCreateGameListener(() => netClient.send({
 		type: 'create-game',
@@ -308,24 +333,25 @@
 			clientId: client.clientId,
 			gameId
 		});
-		client.gameId = gameId;
+		client.gameId.resolve(gameId);
 	});
 
 	window.addEventListener('load', () =>
 		netClient.send({type: 'create-client'}));
 
-	setInterval(() => {
-		if (client.gameId)
+	client.gameId.then(gameId => {
+		view.gameMode();
+		setInterval(() =>
 			netClient.send({
 				type: 'input-game',
 				repeat: true,
 				clientId: client.clientId,
-				gameId: client.gameId,
+				gameId,
 				input: inputs.getInputs(),
-			});
-	}, SEND_INPUTS_PERIOD_MS);
+			}), SEND_INPUTS_PERIOD_MS)
+	});
 
-	// todo send input-game
+	// todo send input-game only if game started
 	// todo send leave-game
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
