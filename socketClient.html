@@ -230,10 +230,41 @@
 		}
 
 		draw() {
+			// clear
 			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-			let tileWidth = canvas.width / this.data.width;
-			let tileHeight = canvas.height / this.data.height;
+
+			// geometry calc
+			const FONT_SIZE = 24;
+			let bottomPaneHeight = FONT_SIZE * 2 + 10;
+
+			// board
+			this.drawBoard(0, 10, canvas.width, canvas.height - bottomPaneHeight - 20);
+
+			// prepare bottom panel
+			canvasCtx.fillStyle = 'rgb(100, 100, 100)';
+			canvasCtx.fillRect(0, canvas.height - bottomPaneHeight, canvas.width, bottomPaneHeight);
+			canvasCtx.fillStyle = 'rgb(255, 255, 255)';
+			canvasCtx.font = `${FONT_SIZE}px monospace`;
+
+			// scores
+			let scores = this.getScores();
+			canvasCtx.fillText(`blue: ${scores[0]}`, 50, canvas.height - bottomPaneHeight + FONT_SIZE);
+			canvasCtx.fillText(`green: ${scores[1]}`, 50, canvas.height - bottomPaneHeight + FONT_SIZE * 2);
+		}
+
+		getScores() {
+			let flatBoard = this.data.board.flat();
+			return [
+				flatBoard.filter(a => a === 1).length,
+				flatBoard.filter(a => a === 2).length];
+		}
+
+		drawBoard(left, top, width, height) {
+			let tileSize = Math.min(width / this.data.width, height / this.data.height);
+			left += (width - this.data.width * tileSize) / 2;
+			top += (height - this.data.height * tileSize) / 2;
+
 			for (let x = 0; x < this.data.width; x++)
 				for (let y = 0; y < this.data.height; y++) {
 					let tile = this.data.board[x][y];
@@ -242,7 +273,7 @@
 						(x + y) % 2;
 					let color = GameState.getColor(tile, selected);
 					canvasCtx.fillStyle = `rgb(${color})`;
-					canvasCtx.fillRect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+					canvasCtx.fillRect(x * tileSize + left, y * tileSize + top, tileSize, tileSize);
 				}
 		}
 
@@ -378,6 +409,5 @@
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
 	// todo hover tiile
-	// todo scores
-	// todo hover print current turn
+	// todo print current turn
 </script>
