@@ -12,6 +12,12 @@
         color: var(--almost-black);
     }
 
+    input,
+    button {
+        font: inherit;
+        font-size: inherit;
+    }
+
     .container {
         display: flex;
         height: 100%;
@@ -20,14 +26,30 @@
     }
 
     .lobby-container {
-        width: 600px;
+        width: 800px;
     }
 
     .title {
         font-size: 20px;
     }
 
-    #game-list {
+    .username {
+        display: flex;
+        align-items: center;
+    }
+
+    input {
+        margin-left: 10px;
+        flex-grow: 1;
+    }
+
+    .center {
+        display: flex;
+    }
+
+    #game-list,
+    #client-list {
+        flex-basis: 0;
         height: 450px;
         border: 1px solid var(--almost-black);
         margin-top: 5px;
@@ -35,7 +57,17 @@
         overflow: auto;
     }
 
-    .game-item {
+    #game-list {
+        flex-grow: 3;
+    }
+
+    #client-list {
+        flex-grow: 1;
+        border-left: 0;
+    }
+
+    .game-item,
+    .client-item {
         padding-top: 5px;
         padding-bottom: 5px;
     }
@@ -51,7 +83,6 @@
     button {
         border: 1px solid var(--almost-black);
         background: none;
-        font: inherit;
         padding-left: 10px;
         padding-right: 10px;
     }
@@ -71,18 +102,29 @@
 <div class="container">
     <div class="lobby-container">
         <div class="title">Lobby</div>
-        <div id="game-list">
-            <!--e.g. <div class="game-item selected" gameId="###'>game 1</div>-->
+        <div class="username">
+            username:<input id="username-input">
+        </div>
+        <div class="center">
+            <div id="game-list">
+                <!--e.g. <div class="game-item selected" gameId="###'>game 1</div>-->
+            </div>
+            <div id="client-list">
+                <!--e.g. <div class="client-item">penguin</div>-->
+            </div>
         </div>
         <div class="lobby-controls">
             <button id="create-game-button">create game</button>
             <button id="join-game-button">join game</button>
-            <span class="population-text"><span
-                    id="population-count-text"></span> clients in lobby</span>
+            <span class="population-text"><span id="population-count-text">0</span> clients in lobby</span>
         </div>
     </div>
 
     <div class="game-container">
+        <div>
+            <span></span>
+            <span id="game-name"></span>
+        </div>
         <canvas width=500 height=500></canvas>
     </div>
 </div>
@@ -90,7 +132,7 @@
 <script>
 	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 	const SERVER_URL = 'ws://localhost:3003';
-	const DEBUG_GAME_VIEW = true;
+	const DEBUG_GAME_VIEW = false;
 
 	const GAME_STATE_ENUM = {
 		WAITING_FOR_PLAYERS: 0,
@@ -121,8 +163,13 @@
 			this.lobbyMode();
 		}
 
+		addUsernameChangeListener(listener) {
+			this.$('#username-input').addEventListener('change', () =>
+				listener(this.$('#username-input').value));
+		}
+
 		addCreateGameListener(listener) {
-			this.$('#create-game-button').addEventListener('click', () => listener());
+			this.$('#create-game-button').addEventListener('click', listener);
 		}
 
 		addJoinGameListener(listener) {
@@ -139,8 +186,29 @@
 			this.$('.game-container').hidden = false;
 		}
 
-		updateLobby(population, games) {
+		setClientName(clientName) {
+			this.$('#username-input').value = clientName;
+		}
+
+		updateLobby(population, clientNames, games) {
 			this.$('#population-count-text').textContent = population;
+
+			// todo extract client/game list logic to reusable helper
+			let clientList = this.$('#client-list');
+			for (let i = clientList.childElementCount; i < clientNames.length; i++) {
+				let clientItem = document.createElement('div');
+				clientItem.classList.add('client-item');
+				clientItem.addEventListener('click', () =>
+					this.updateLobbySelected(clientItem));
+				clientList.appendChild(clientItem)
+			}
+			while (clientList.childElementCount > clientNames.length)
+				clientList.lastChild.remove();
+
+			clientNames.forEach((name, i) => {
+				let clientItem = clientList.children[i];
+				clientItem.textContent = name;
+			});
 
 			let gameList = this.$('#game-list');
 			for (let i = gameList.childElementCount; i < games.length; i++) {
@@ -165,6 +233,8 @@
 			[...this.$('#game-list').children].forEach(gameItem =>
 				gameItem.classList.toggle('selected', gameItem === selectedGameItem));
 		}
+
+		// updateGame(game)
 
 		static getGameStateText(state) {
 			switch (state) {
@@ -356,17 +426,14 @@
 	let netClient = new NetClient(SERVER_URL, message => {
 		switch (message.type) {
 			case 'created-client':
-				client.clientId = message.clientId;
-				netClient.send({
-					type: 'join-lobby',
-					clientId: client.clientId
-				});
+				client.clientId = message.id;
+				view.setClientName(message.name);
 				break;
 			case 'created-game':
-				client.gameId.resolve(message.gameId);
+				client.gameId.resolve(message.id);
 				break;
 			case 'lobby':
-				view.updateLobby(message.population, message.games);
+				view.updateLobby(message.population, message.clientNames, message.games);
 				break;
 			case 'game':
 				gameState.setData(message.data);
@@ -375,6 +442,11 @@
 				console.warn('unrecognized message type:', message.type);
 		}
 	});
+	view.addUsernameChangeListener(name => netClient.send({
+		type: 'change-client-name',
+		clientId: client.clientId,
+		name,
+	}));
 	view.addCreateGameListener(() => netClient.send({
 		type: 'create-game',
 		clientId: client.clientId
@@ -396,7 +468,6 @@
 		setInterval(() =>
 			netClient.send({
 				type: 'input-game',
-				repeat: true,
 				clientId: client.clientId,
 				gameId,
 				input: inputs.getInputs(),
@@ -418,5 +489,5 @@
 	// todo send leave-game
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
-	// todo hover tiile
+	// todo hover tile
 </script>

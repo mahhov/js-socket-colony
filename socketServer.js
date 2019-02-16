@@ -3,6 +3,11 @@ const WebSocket = require('ws');
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
 
+const CLIENT_STATE_ENUM = {
+	LOBBY: 0,
+	IN_GAME: 1,
+};
+
 const GAME_STATE_ENUM = {
 	WAITING_FOR_PLAYERS: 0,
 	IN_PROGRESS: 1,
@@ -208,13 +213,17 @@ class Net {
 
 class Server {
 	constructor() {
-		this.lobby = [];
-		this.games = [];
 		this.clients = [];
+		this.games = [];
 	}
 
 	static get randId() {
 		return parseInt(Math.random() * 1e15) + 1;
+	}
+
+	static get randName() {
+		const NAMES = ['alligator', 'crocodile', 'alpaca', 'ant', 'antelope', 'ape', 'armadillo', 'donkey', 'baboon', 'badger', 'bat', 'bear', 'beaver', 'bee', 'beetle', 'buffalo', 'butterfly', 'camel', 'carabao', 'water buffalo', 'caribou', 'cat', 'cattle', 'cheetah', 'chimpanzee', 'chinchilla', 'cicada', 'clam', 'cockroach', 'cod', 'coyote', 'crab', 'cricket', 'crow', 'raven', 'deer', 'dinosaur', 'dog', 'dolphin', 'porpoise', 'duck', 'eagle', 'echidna', 'eel', 'elephant', 'elk', 'ferret', 'fish', 'fly', 'fox', 'frog', 'toad', 'gerbil', 'giraffe', 'gnat', 'gnu', 'wildebeest', 'goat', 'goldfish', 'goose', 'gorilla', 'grasshopper', 'guinea pig', 'hamster', 'hare', 'hedgehog', 'herring', 'hippopotamus', 'hornet', 'horse', 'hound', 'hyena', 'impala', 'insect', 'jackal', 'jellyfish', 'kangaroo', 'wallaby', 'koala', 'leopard', 'lion', 'lizard', 'llama', 'locust', 'louse', 'macaw', 'mallard', 'mammoth', 'manatee', 'marten', 'mink', 'minnow', 'mole', 'monkey', 'moose', 'mosquito', 'mouse', 'rat', 'mule', 'muskrat', 'otter', 'ox', 'oyster', 'panda', 'pig', 'hog', 'swine', 'wild pig', 'platypus', 'porcupine', 'prairie dog', 'pug', 'rabbit', 'raccoon', 'reindeer', 'rhinoceros', 'salmon', 'sardine', 'scorpion', 'seal', 'sea lion', 'serval', 'shark', 'sheep', 'skunk', 'snail', 'snake', 'spider', 'squirrel', 'swan', 'termite', 'tiger', 'trout', 'turtle', 'tortoise', 'walrus', 'wasp', 'weasel', 'whale', 'wolf', 'wombat', 'woodchuck', 'worm', 'yak', 'yellowjacket', 'zebra'];
+		return NAMES[parseInt(Math.random() * NAMES.length)];
 	}
 
 	findClient(clientId) {
@@ -226,101 +235,110 @@ class Server {
 	}
 
 	createClient(netClient) {
-		let id = Server.randId;
-		this.clients.push({id, netClient});
-		return id;
+		let client = {
+			id: Server.randId,
+			name: Server.randName,
+			state: CLIENT_STATE_ENUM.LOBBY,
+			game: null,
+			inputs: new Inputs(),
+			netClient,
+		};
+		this.clients.push(client);
+		return client;
 	}
 
-	joinLobby(clientId) {
-		if (this.findClient(clientId) && !this.lobby.includes(clientId))
-			this.lobby.push(clientId);
+	changeClientName(client, name) {
+		client.name = name;
 	}
 
-	createAndJoinGame(clientId) {
-		if (!this.findClient(clientId))
-			return;
-		let id = Server.randId;
-		this.games.push({
-			id,
-			clients: [],
-			requiredClients: NUM_CLIENTS_PER_GAME,
+	createAndJoinGame(client) {
+		let game = {
+			id: Server.randId,
+			name: Server.randName,
 			state: GAME_STATE_ENUM.WAITING_FOR_PLAYERS,
-			inputsList: [],
-		});
-		this.joinGame(clientId, id);
-		return id;
+			requiredClients: NUM_CLIENTS_PER_GAME,
+			clients: [],
+		};
+		this.games.push(game);
+		this.joinGame(client, game);
+		return game;
 	}
 
-	joinGame(clientId, gameId) {
-		if (!this.findClient(clientId))
+	joinGame(client, game) {
+		if (client.game === game)
 			return;
-		let game = this.findGame(gameId);
-		if (!game || game.clients.includes(clientId))
-			return;
-		game.clients.push(clientId);
-		game.inputsList.push(new Inputs());
+		if (client.game)
+			this.leaveGame(client);
+		client.game = game;
+		client.state = CLIENT_STATE_ENUM.IN_GAME;
+		game.clients.push(client);
 		if (game.clients.length === NUM_CLIENTS_PER_GAME) {
 			game.state = GAME_STATE_ENUM.IN_PROGRESS;
-			game.game = new Game();
+			game.gameCore = new Game();
 		}
 	}
 
-	leaveGame(clientId, gameId) {
-		if (!this.findClient(clientId))
-			return;
-		let game = this.findGame(gameId);
-		if (!game || !game.clients.includes(clientId))
-			return;
-		game.clients = game.clients.filter(id => id !== clientId);
+	leaveGame(client) {
+		client.game.clients = client.game.clients.filter(clientI => clientI !== client);
+		client.game = null;
+		client.state = CLIENT_STATE_ENUM.LOBBY;
 	}
 
-	inputGame(clientId, gameId, input) {
-		if (!this.findClient(clientId))
-			return;
-		let game = this.findGame(gameId);
-		if (!game)
-			return;
-		let clientIndex = game.clients.indexOf(clientId);
-		if (clientIndex === -1)
-			return;
-		game.inputsList[clientIndex].accumulateInput(input)
+	inputGame(client, input) {
+		client.inputs.accumulatedInputs(input);
 	}
 
 	getLobbyNetClients() {
-		return this.lobby
-			.map(clientId => this.findClient(clientId))
+		return this.clients
+			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS)
 			.map(client => client.netClient);
 	}
 
-	getGameClients(gameId) {
-		return this.findGame(gameId).clients
-			.map(clientId => this.findClient(clientId))
-			.map(client => client.netClient);
+	getGameClients(game) {
+		return game.clients.map(client => client.netClient);
+	}
+
+	cleanClosedClients() {
+		this.clients = this.clients.filter(client => {
+			if (client.netClient.readyState !== WebSocket.CLOSED)
+				return true;
+			if (client.game)
+				this.leaveGame(client);
+		});
 	}
 }
 
 let server = new Server();
-let net = new Net(3003, (client, message) => {
+let net = new Net(3003, (netClient, message) => {
+	let client = server.findClient(message.clientId);
+	let game = server.findGame(message.gameId);
+
 	switch (message.type) {
 		case 'create-client':
-			let clientId = server.createClient(client);
-			net.send([client], {type: 'created-client', clientId});
+			let {id, name} = server.createClient(netClient);
+			net.send([netClient], {type: 'created-client', id, name});
 			break;
-		case 'join-lobby':
-			server.joinLobby(message.clientId);
+		case 'change-client-name':
+			if (client)
+				server.changeClientName(client, message.name);
 			break;
 		case 'create-game':
-			let gameId = server.createAndJoinGame(message.clientId);
-			net.send([client], {type: 'created-game', gameId});
+			if (client) {
+				let {id, name} = server.createAndJoinGame(client);
+				net.send([netClient], {type: 'created-game', id, name});
+			}
 			break;
 		case 'join-game':
-			server.joinGame(message.clientId, message.gameId);
+			if (client && game)
+				server.joinGame(client, game);
 			break;
 		case 'leave-game':
-			server.leaveGame(message.clientId, message.gameId);
+			if (client)
+				server.leaveGame(client);
 			break;
 		case 'input-game':
-			server.inputGame(message.clientId, message.gameId, message.input);
+			if (client)
+				server.inputGame(client, message.input);
 			break;
 		default:
 			console.warn('unrecognized message type:', message.type);
@@ -328,26 +346,31 @@ let net = new Net(3003, (client, message) => {
 });
 
 setInterval(() => {
+	server.cleanClosedClients();
+
+	let clientNames = server.clients.map(({name}) => name);
 	net.send(server.getLobbyNetClients(), {
 		type: 'lobby',
-		repeat: true,
 		population: server.clients.length,
-		games: server.games.map(({id, clients, state}) => ({
+		clientNames,
+		games: server.games.map(({id, name, state, clients}) => ({
 			id,
-			population: clients.length,
+			name,
 			state,
+			population: clients.length,
 		}))
 	});
 
 	server.games
 		.filter(({state}) => state === GAME_STATE_ENUM.IN_PROGRESS)
-		.forEach(({id, clients, inputsList, game}) => {
-			game.update(inputsList);
-			net.send(server.getGameClients(id), {
+		.forEach(({id, name, clients, gameCore}) => {
+			let clientInputs = clients.map(({inputs}) => inputs);
+			let clientNames = clients.map(({name}) => name);
+			gameCore.update(clientInputs);
+			net.send(server.getGameClients(game), {
 				type: 'game',
-				repeat: true,
-				clientIds: clients,
-				data: game.getStateDiff()
+				clientNames,
+				data: game.getStateDiff(),
 			});
 		});
 }, UPDATE_GAME_PERIOD_MS);
