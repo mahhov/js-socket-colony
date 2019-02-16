@@ -10,12 +10,12 @@
         font-family: monospace;
         font-size: 16px;
         color: var(--almost-black);
+        user-select: none;
     }
 
     input,
     button {
         font: inherit;
-        font-size: inherit;
     }
 
     .container {
@@ -72,6 +72,10 @@
         padding-bottom: 5px;
     }
 
+    .game-item {
+        cursor: pointer;
+    }
+
     .lobby-controls {
         margin-top: 10px;
     }
@@ -85,6 +89,7 @@
         background: none;
         padding-left: 10px;
         padding-right: 10px;
+        cursor: pointer;
     }
 
     .game-item:hover,
@@ -221,10 +226,10 @@
 			while (gameList.childElementCount > games.length)
 				gameList.lastChild.remove();
 
-			games.forEach(({id, population, state}, i) => {
+			games.forEach(({id, name, state, population}, i) => {
 				let gameItem = gameList.children[i];
 				gameItem.gameId = id;
-				gameItem.textContent = `${id}: ${View.getGameStateText(state)} (${population} / ${2} players)`; // todo don't hardcode 2
+				gameItem.textContent = `${name}: ${View.getGameStateText(state)} (${population} / ${2} players)`; // todo don't hardcode 2
 			});
 		};
 
