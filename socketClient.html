@@ -237,6 +237,7 @@
 			// geometry calc
 			const FONT_SIZE = 24;
 			let bottomPaneHeight = FONT_SIZE * 2 + 10;
+			let textMargin = 50;
 
 			// board
 			this.drawBoard(0, 10, canvas.width, canvas.height - bottomPaneHeight - 20);
@@ -249,8 +250,13 @@
 
 			// scores
 			let scores = this.getScores();
-			canvasCtx.fillText(`blue: ${scores[0]}`, 50, canvas.height - bottomPaneHeight + FONT_SIZE);
-			canvasCtx.fillText(`green: ${scores[1]}`, 50, canvas.height - bottomPaneHeight + FONT_SIZE * 2);
+			canvasCtx.fillText(`blue: ${scores[0]}`, textMargin, canvas.height - bottomPaneHeight + FONT_SIZE);
+			canvasCtx.fillText(`green: ${scores[1]}`, textMargin, canvas.height - bottomPaneHeight + FONT_SIZE * 2);
+
+			// turn
+			let turnText = this.getTurnText();
+			let turnTextLeft = canvas.width - textMargin - canvasCtx.measureText(turnText).width;
+			canvasCtx.fillText(turnText, turnTextLeft, canvas.height - bottomPaneHeight + FONT_SIZE);
 		}
 
 		getScores() {
@@ -258,6 +264,10 @@
 			return [
 				flatBoard.filter(a => a === 1).length,
 				flatBoard.filter(a => a === 2).length];
+		}
+
+		getTurnText() {
+			return ['blue', 'green'][this.data.turn] + "'s turn";
 		}
 
 		drawBoard(left, top, width, height) {
@@ -409,5 +419,4 @@
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
 	// todo hover tiile
-	// todo print current turn
 </script>
