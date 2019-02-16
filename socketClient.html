@@ -90,6 +90,7 @@
 <script>
 	const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 	const SERVER_URL = 'ws://localhost:3003';
+	const DEBUG_GAME_VIEW = true;
 
 	const GAME_STATE_ENUM = {
 		WAITING_FOR_PLAYERS: 0,
@@ -360,6 +361,17 @@
 				input: inputs.getInputs(),
 			}), SEND_INPUTS_PERIOD_MS)
 	});
+
+	if (DEBUG_GAME_VIEW) {
+		view.gameMode();
+		gameState.setData({
+			'width': 10,
+			'height': 10,
+			'board': [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 0, 0], [0, 0, 2, 2, 2, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],
+			'turn': 0,
+			'selected': {}
+		});
+	}
 
 	// todo send input-game only if game started
 	// todo send leave-game
