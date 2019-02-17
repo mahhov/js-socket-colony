@@ -298,13 +298,15 @@ class Server {
 		return game.clients.map(client => client.netClient);
 	}
 
-	cleanClosedClients() {
+	cleanClosedClientsAndGames() {
 		this.clients = this.clients.filter(client => {
 			if (client.netClient.readyState !== WebSocket.CLOSED)
 				return true;
 			if (client.game)
 				this.leaveGame(client);
 		});
+
+		this.games = this.games.filter(game => game.clients.length);
 	}
 }
 
@@ -346,7 +348,7 @@ let net = new Net(3003, (netClient, message) => {
 });
 
 setInterval(() => {
-	server.cleanClosedClients();
+	server.cleanClosedClientsAndGames();
 
 	let clientNames = server.clients.map(({name}) => name);
 	net.send(server.getLobbyNetClients(), {
