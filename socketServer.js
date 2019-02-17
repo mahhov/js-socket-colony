@@ -285,7 +285,7 @@ class Server {
 	}
 
 	inputGame(client, input) {
-		client.inputs.accumulatedInputs(input);
+		client.inputs.accumulateInput(input);
 	}
 
 	getLobbyNetClients() {
@@ -363,14 +363,14 @@ setInterval(() => {
 
 	server.games
 		.filter(({state}) => state === GAME_STATE_ENUM.IN_PROGRESS)
-		.forEach(({id, name, clients, gameCore}) => {
-			let clientInputs = clients.map(({inputs}) => inputs);
-			let clientNames = clients.map(({name}) => name);
-			gameCore.update(clientInputs);
+		.forEach(game => {
+			let clientInputs = game.clients.map(({inputs}) => inputs);
+			let clientNames = game.clients.map(({name}) => name);
+			game.gameCore.update(clientInputs);
 			net.send(server.getGameClients(game), {
 				type: 'game',
 				clientNames,
-				data: game.getStateDiff(),
+				data: game.gameCore.getStateDiff(),
 			});
 		});
 }, UPDATE_GAME_PERIOD_MS);
