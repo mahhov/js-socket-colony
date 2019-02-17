@@ -170,7 +170,7 @@ class Game {
 	}
 
 	getMouseInput(inputs) {
-		if (!inputs.isTriggered(KEY_ENUM.MOUSE))
+		if (!inputs || !inputs.isTriggered(KEY_ENUM.MOUSE))
 			return;
 		let x = Math.floor(this.width * inputs.mouse.x);
 		let y = Math.floor(this.height * inputs.mouse.y);
