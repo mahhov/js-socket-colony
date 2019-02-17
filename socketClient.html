@@ -305,33 +305,30 @@
 		}
 
 		draw() {
+			let geometry = this.getDrawGeometry();
+
 			// clear
 			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
 			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-			// geometry calc
-			const FONT_SIZE = 24;
-			let bottomPaneHeight = FONT_SIZE * 2 + 10;
-			let textMargin = 50;
-
 			// board
-			this.drawBoard(0, 10, canvas.width, canvas.height - bottomPaneHeight - 20);
+			this.drawBoard(geometry.boardLeft, geometry.boardTop, geometry.boardTileSize);
 
 			// prepare bottom panel
 			canvasCtx.fillStyle = 'rgb(100, 100, 100)';
-			canvasCtx.fillRect(0, canvas.height - bottomPaneHeight, canvas.width, bottomPaneHeight);
+			canvasCtx.fillRect(0, canvas.height - geometry.bottomPaneHeight, canvas.width, geometry.bottomPaneHeight);
 			canvasCtx.fillStyle = 'rgb(255, 255, 255)';
-			canvasCtx.font = `${FONT_SIZE}px monospace`;
+			canvasCtx.font = `${geometry.fontSize}px monospace`;
 
 			// scores
 			let scores = this.getScores();
-			canvasCtx.fillText(`blue: ${scores[0]}`, textMargin, canvas.height - bottomPaneHeight + FONT_SIZE);
-			canvasCtx.fillText(`green: ${scores[1]}`, textMargin, canvas.height - bottomPaneHeight + FONT_SIZE * 2);
+			canvasCtx.fillText(`blue: ${scores[0]}`, geometry.textMargin, canvas.height - geometry.bottomPaneHeight + geometry.fontSize);
+			canvasCtx.fillText(`green: ${scores[1]}`, geometry.textMargin, canvas.height - geometry.bottomPaneHeight + geometry.fontSize * 2);
 
 			// turn
 			let turnText = this.getTurnText();
-			let turnTextLeft = canvas.width - textMargin - canvasCtx.measureText(turnText).width;
-			canvasCtx.fillText(turnText, turnTextLeft, canvas.height - bottomPaneHeight + FONT_SIZE);
+			let turnTextLeft = canvas.width - geometry.textMargin - canvasCtx.measureText(turnText).width;
+			canvasCtx.fillText(turnText, turnTextLeft, canvas.height - geometry.bottomPaneHeight + geometry.fontSize);
 		}
 
 		getScores() {
@@ -345,11 +342,7 @@
 			return ['blue', 'green'][this.data.turn] + "'s turn";
 		}
 
-		drawBoard(left, top, width, height) {
-			let tileSize = Math.min(width / this.data.width, height / this.data.height);
-			left += (width - this.data.width * tileSize) / 2;
-			top += (height - this.data.height * tileSize) / 2;
-
+		drawBoard(left, top, tileSize) {
 			for (let x = 0; x < this.data.width; x++)
 				for (let y = 0; y < this.data.height; y++) {
 					let tile = this.data.board[x][y];
@@ -360,6 +353,39 @@
 					canvasCtx.fillStyle = `rgb(${color})`;
 					canvasCtx.fillRect(x * tileSize + left, y * tileSize + top, tileSize, tileSize);
 				}
+		}
+
+		getDrawGeometry() {
+			// todo cache once game width/height are set
+			let fontSize = 24;
+			let bottomPaneHeight = fontSize * 2 + 10;
+			let textMargin = 50;
+
+			let maxBoardLeft = 0;
+			let maxBoardTop = 10;
+			let maxBoardWidth = canvas.width;
+			let maxBoardHeight = canvas.height - bottomPaneHeight - 20;
+
+			let boardTileSize = Math.min(maxBoardWidth / this.data.width, maxBoardHeight / this.data.height);
+			let boardLeft = maxBoardLeft + (maxBoardWidth - this.data.width * boardTileSize) / 2;
+			let boardTop = maxBoardTop + (maxBoardHeight - this.data.height * boardTileSize) / 2;
+			let boardWidth = this.data.width * boardTileSize;
+			let boardHeight = this.data.height * boardTileSize;
+
+			return {
+				fontSize,
+				bottomPaneHeight,
+				textMargin,
+				maxBoardLeft,
+				maxBoardTop,
+				maxBoardWidth,
+				maxBoardHeight,
+				boardTileSize,
+				boardLeft,
+				boardTop,
+				boardWidth,
+				boardHeight,
+			};
 		}
 
 		static getColor(tile, selected) {
@@ -373,31 +399,31 @@
 
 	class Controller {
 		constructor(mouseTarget) {
-			this.mouseTarget = mouseTarget;
-
 			document.addEventListener('keydown', ({key, repeat}) =>
 				!repeat && inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.PRESSED}));
 
 			document.addEventListener('keyup', ({key}) =>
 				inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.RELEASED}));
 
-			document.addEventListener('mousemove', ({x, y}) =>
-				this.mouseInput(x, y));
+			mouseTarget.addEventListener('mousemove', ({offsetX, offsetY}) =>
+				this.mouseInput(offsetX, offsetY));
 
-			document.addEventListener('mousedown', ({x, y}) => {
-				this.mouseInput(x, y);
+			mouseTarget.addEventListener('mousedown', ({offsetX, offsetY}) => {
+				this.mouseInput(offsetX, offsetY);
 				inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.PRESSED});
 			});
 
-			document.addEventListener('mouseup', ({x, y}) => {
-				this.mouseInput(x, y);
+			mouseTarget.addEventListener('mouseup', ({offsetX, offsetY}) => {
+				this.mouseInput(offsetX, offsetY);
 				inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.RELEASED});
 			});
 		}
 
 		mouseInput(x, y) {
-			inputs.accumulateMouseInput((x - this.mouseTarget.offsetLeft) / this.mouseTarget.width,
-				(y - this.mouseTarget.offsetTop) / this.mouseTarget.height);
+			// todo should not be directly accessing gameState
+			let {boardLeft, boardTop, boardTileSize, boardWidth, boardHeight} = gameState.getDrawGeometry();
+			inputs.accumulateMouseInput((x - boardLeft) / boardWidth,
+				(y - boardTop) / boardHeight);
 		}
 	}
 

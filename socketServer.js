@@ -172,8 +172,8 @@ class Game {
 	getMouseInput(inputs) {
 		if (!inputs.isTriggered(KEY_ENUM.MOUSE))
 			return;
-		let x = parseInt(this.width * inputs.mouse.x);
-		let y = parseInt(this.height * inputs.mouse.y);
+		let x = Math.floor(this.width * inputs.mouse.x);
+		let y = Math.floor(this.height * inputs.mouse.y);
 		if (x < 0 || x >= this.width || y < 0 || y >= this.height)
 			return;
 		return {x, y};
