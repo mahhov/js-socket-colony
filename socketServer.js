@@ -11,7 +11,7 @@ const CLIENT_STATE_ENUM = {
 const GAME_STATE_ENUM = {
 	WAITING_FOR_PLAYERS: 0,
 	IN_PROGRESS: 1,
-	ENDED: 2,
+	ABANDONED: 2,
 };
 
 const KEY_ENUM = {
@@ -279,6 +279,7 @@ class Server {
 	}
 
 	leaveGame(client) {
+		client.game.state = GAME_STATE_ENUM.ABANDONED; // todo don't abbandon if spectator leaves
 		client.game.clients = client.game.clients.filter(clientI => clientI !== client);
 		client.game = null;
 		client.state = CLIENT_STATE_ENUM.LOBBY;
