@@ -370,11 +370,10 @@ setInterval(() => {
 	});
 
 	server.games
-		.filter(({state}) => state === GAME_STATE_ENUM.IN_PROGRESS)
 		.forEach(game => {
-			let clientInputs = game.clients.map(({inputs}) => inputs);
+			if (game.state === GAME_STATE_ENUM.IN_PROGRESS)
+				game.gameCore.update(game.clients.map(({inputs}) => inputs));
 			let clientNames = game.clients.map(({name}) => name);
-			game.gameCore.update(clientInputs);
 			net.send(Server.getGameClients(game), {
 				type: 'game',
 				clientNames,
