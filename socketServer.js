@@ -247,7 +247,7 @@ class Server {
 		return client;
 	}
 
-	changeClientName(client, name) {
+	static changeClientName(client, name) {
 		client.name = name;
 	}
 
@@ -285,7 +285,7 @@ class Server {
 		client.state = CLIENT_STATE_ENUM.LOBBY;
 	}
 
-	inputGame(client, input) {
+	static inputGame(client, input) {
 		client.inputs.accumulateInput(input);
 	}
 
@@ -295,7 +295,7 @@ class Server {
 			.map(client => client.netClient);
 	}
 
-	getGameClients(game) {
+	static getGameClients(game) {
 		return game.clients.map(client => client.netClient);
 	}
 
@@ -323,7 +323,7 @@ let net = new Net(3003, (netClient, message) => {
 			break;
 		case 'change-client-name':
 			if (client)
-				server.changeClientName(client, message.name);
+				Server.changeClientName(client, message.name);
 			break;
 		case 'create-game':
 			if (client) {
@@ -341,7 +341,7 @@ let net = new Net(3003, (netClient, message) => {
 			break;
 		case 'input-game':
 			if (client)
-				server.inputGame(client, message.input);
+				Server.inputGame(client, message.input);
 			break;
 		default:
 			console.warn('unrecognized message type:', message.type);
@@ -370,10 +370,11 @@ setInterval(() => {
 			let clientInputs = game.clients.map(({inputs}) => inputs);
 			let clientNames = game.clients.map(({name}) => name);
 			game.gameCore.update(clientInputs);
-			net.send(server.getGameClients(game), {
+			net.send(Server.getGameClients(game), {
 				type: 'game',
 				clientNames,
 				data: game.gameCore.getStateDiff(),
+				game: Server.getGameMessage(game),
 			});
 		});
 }, UPDATE_GAME_PERIOD_MS);
