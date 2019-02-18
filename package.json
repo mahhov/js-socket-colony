@@ -4,11 +4,16 @@
   "description": "",
   "main": "socketServer.js",
   "scripts": {
-    "server": "node socketServer"
+    "server": "node out/socketServer.js",
+    "build": "rm -rf out; mkdir out; cp {socketServer.js,socketClient.html} out/; browserify ./socketClient.js -o out/socketClient.js",
+    "dev": "rm -rf out; mkdir out; cp {socketServer.js,socketClient.html} out/; browserify ./socketClient.js -o out/socketClient.js; node out/socketServer",
+    "dev-easy": "node socketServer"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
+  "devDependencies": {
+    "browserify": "^16.2.3"
+  },
   "dependencies": {
     "ws": "^6.1.3"
   }
