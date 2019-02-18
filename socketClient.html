@@ -84,6 +84,18 @@
         float: right;
     }
 
+    #game-state {
+        margin-left: 20px;
+    }
+
+    #leave-game-button {
+        float: right;
+    }
+
+    canvas {
+        margin-top: 10px;
+    }
+
     button {
         border: 1px solid var(--almost-black);
         background: none;
@@ -129,6 +141,8 @@
         <div>
             <span></span>
             <span id="game-name"></span>
+            <span id="game-state"></span>
+            <button id="leave-game-button">leave game</button>
         </div>
         <canvas width=500 height=500></canvas>
     </div>
@@ -182,6 +196,10 @@
 				if ([...this.$('#game-list').children].some(gameItem => gameItem.gameId === this.selectedGameId))
 					listener(this.selectedGameId)
 			});
+		}
+
+		addLeaveGameListener(listener) {
+			this.$('#leave-game-button').addEventListener('click', listener);
 		}
 
 		lobbyMode() {
@@ -242,7 +260,10 @@
 				gameItem.classList.toggle('selected', gameItem === selectedGameItem));
 		}
 
-		// updateGame(game)
+		updateGame(name, state) {
+			this.$('#game-name').textContent = name;
+			this.$('#game-state').textContent = View.getGameStateText(state);
+		}
 
 		static getGameStateText(state) {
 			switch (state) {
@@ -251,7 +272,7 @@
 				case GAME_STATE_ENUM.IN_PROGRESS:
 					return 'game in progress';
 				case GAME_STATE_ENUM.ENDED:
-					return 'game ended';
+					return 'game abandoned';
 				default:
 					console.warn('unrecognized game state:', state);
 			}
@@ -299,7 +320,7 @@
 
 	class GameState {
 		constructor() {
-
+			this.data = {width: 0, height: 0};
 		}
 
 		setData(data) {
@@ -450,63 +471,114 @@
 		}
 	}
 
+	class Client {
+		constructor() {
+			this.clientId = null;
+			this.gameId = null;
+		}
+
+		createClient() {
+			netClient.send({type: 'create-client'});
+		}
+
+		setClient(id, name) {
+			this.clientId = id;
+			view.setClientName(name);
+		}
+
+		requestUsernameChange(name) {
+			netClient.send({
+				type: 'change-client-name',
+				clientId: this.clientId,
+				name,
+			});
+		}
+
+		createGame() {
+			netClient.send({
+				type: 'create-game',
+				clientId: this.clientId,
+			});
+		}
+
+		joinGame(gameId) {
+			netClient.send({
+				type: 'join-game',
+				clientId: this.clientId,
+				gameId,
+			});
+			this.setGame(gameId);
+		}
+
+		setGame(gameId) {
+			this.gameId = gameId;
+			view.gameMode();
+		}
+
+		leaveGame() {
+			netClient.send({
+				type: 'leave-game',
+				clientId: this.clientId,
+			});
+			this.gameId = null;
+			view.lobbyMode();
+		}
+
+		updateLobby(population, clientNames, games) {
+			view.updateLobby(population, clientNames, games);
+		}
+
+		updateGame(data, game) {
+			console.log('update game')
+			gameState.setData(data);
+			view.updateGame(game.name, game.state);
+		}
+
+		gameInput() {
+			if (this.gameId)
+				netClient.send({
+					type: 'input-game',
+					clientId: this.clientId,
+					gameId: this.gameId,
+					input: inputs.getInputs(),
+				});
+		}
+	}
+
 	let canvas = document.querySelector('canvas');
 	let canvasCtx = canvas.getContext('2d');
 	let gameState = new GameState();
 	let inputs = new Inputs();
 	let controller = new Controller(canvas);
 	let view = new View();
-	let client = {clientId: null, gameId: newPromise()};
+	let client = new Client();
 	let netClient = new NetClient(SERVER_URL, message => {
 		switch (message.type) {
 			case 'created-client':
-				client.clientId = message.id;
-				view.setClientName(message.name);
+				client.setClient(message.id, message.name);
 				break;
 			case 'created-game':
-				client.gameId.resolve(message.id);
+				client.setGame(message.id);
 				break;
 			case 'lobby':
-				view.updateLobby(message.population, message.clientNames, message.games);
+				client.updateLobby(message.population, message.clientNames, message.games);
 				break;
 			case 'game':
-				gameState.setData(message.data);
+				client.updateGame(message.data, message.game);
 				break;
 			default:
 				console.warn('unrecognized message type:', message.type);
 		}
 	});
-	view.addUsernameChangeListener(name => netClient.send({
-		type: 'change-client-name',
-		clientId: client.clientId,
-		name,
-	}));
-	view.addCreateGameListener(() => netClient.send({
-		type: 'create-game',
-		clientId: client.clientId
-	}));
-	view.addJoinGameListener(gameId => {
-		netClient.send({
-			type: 'join-game',
-			clientId: client.clientId,
-			gameId
-		});
-		client.gameId.resolve(gameId);
-	});
 
-	window.addEventListener('load', () =>
-		netClient.send({type: 'create-client'}));
+	view.addUsernameChangeListener(name => client.requestUsernameChange(name));
+	view.addCreateGameListener(() => client.createGame());
+	view.addJoinGameListener(gameId => client.joinGame(gameId));
+	view.addLeaveGameListener(() => client.leaveGame());
 
-	client.gameId.then(gameId => {
-		view.gameMode();
-		setInterval(() =>
-			netClient.send({
-				type: 'input-game',
-				clientId: client.clientId,
-				gameId,
-				input: inputs.getInputs(),
-			}), SEND_INPUTS_PERIOD_MS)
-	});
+	window.addEventListener('load', () => client.createClient());
+
+	setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
 
 	if (DEBUG_GAME_VIEW) {
 		view.gameMode();
@@ -524,5 +596,6 @@
 	// todo indicate clientId and gameId (or names)
 	// todo heartbeat for lobby count
 	// todo hover tile
-    // todo keep displaying lobby until games starts
+	// todo keep displaying lobby until games starts
+	// todo why does game stop getting updates when 1 client leaves
 </script>
