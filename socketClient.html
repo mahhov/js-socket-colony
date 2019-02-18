@@ -320,12 +320,15 @@
 
 	class GameState {
 		constructor() {
-			this.data = {width: 0, height: 0};
+			this.resetData();
+		}
+
+		resetData() {
+			this.data = {width: 0, height: 0, board: []};
 		}
 
 		setData(data) {
 			this.data = data;
-			this.draw();
 		}
 
 		draw() {
@@ -512,6 +515,7 @@
 
 		setGame(gameId) {
 			this.gameId = gameId;
+			gameState.resetData();
 			view.gameMode();
 		}
 
@@ -529,8 +533,9 @@
 		}
 
 		updateGame(data, game) {
-			console.log('update game')
-			gameState.setData(data);
+			if (data)
+				gameState.setData(data);
+			gameState.draw();
 			view.updateGame(game.name, game.state);
 		}
 

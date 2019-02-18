@@ -371,13 +371,14 @@ setInterval(() => {
 
 	server.games
 		.forEach(game => {
-			if (game.state === GAME_STATE_ENUM.IN_PROGRESS)
+			let inProgress = game.state === GAME_STATE_ENUM.IN_PROGRESS;
+			if (inProgress)
 				game.gameCore.update(game.clients.map(({inputs}) => inputs));
 			let clientNames = game.clients.map(({name}) => name);
 			net.send(Server.getGameClients(game), {
 				type: 'game',
 				clientNames,
-				data: game.gameCore.getStateDiff(),
+				data: inProgress && game.gameCore.getStateDiff(),
 				game: Server.getGameMessage(game),
 			});
 		});
