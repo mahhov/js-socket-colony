@@ -299,6 +299,16 @@ class Server {
 		return game.clients.map(client => client.netClient);
 	}
 
+	static getGameMessage(game) {
+		let {id, name, state, clients} = game;
+		return {
+			id,
+			name,
+			state,
+			population: clients.length,
+		};
+	}
+
 	cleanClosedClientsAndGames() {
 		this.clients = this.clients.filter(client => {
 			if (client.netClient.readyState !== WebSocket.CLOSED)
@@ -356,12 +366,7 @@ setInterval(() => {
 		type: 'lobby',
 		population: server.clients.length,
 		clientNames,
-		games: server.games.map(({id, name, state, clients}) => ({
-			id,
-			name,
-			state,
-			population: clients.length,
-		}))
+		games: server.games.map(Server.getGameMessage),
 	});
 
 	server.games
