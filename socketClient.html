@@ -178,7 +178,10 @@
 		}
 
 		addJoinGameListener(listener) {
-			this.$('#join-game-button').addEventListener('click', () => listener(this.selectedGameId));
+			this.$('#join-game-button').addEventListener('click', () => {
+				if ([...this.$('#game-list').children].some(gameItem => gameItem.gameId === this.selectedGameId))
+					listener(this.selectedGameId)
+			});
 		}
 
 		lobbyMode() {
