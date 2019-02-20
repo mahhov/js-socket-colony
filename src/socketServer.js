@@ -323,7 +323,7 @@ class Server {
 }
 
 let server = new Server();
-let net = new Net(3003, (netClient, message) => {
+let net = new Net(process.env.PORT, (netClient, message) => {
 	let client = server.findClient(message.clientId);
 	let game = server.findGame(message.gameId);
 
@@ -385,4 +385,4 @@ setInterval(() => {
 		});
 }, UPDATE_GAME_PERIOD_MS);
 
-new HtmlHttpServer('./socketClient.html', 3004).start();
+// new HtmlHttpServer('./socketClient.html', 3004).start();
