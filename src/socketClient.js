@@ -1,4 +1,4 @@
-const PromiseX = require('./src/PromiseX');
+const PromiseX = require('./PromiseX');
 
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = 'ws://localhost:3003';

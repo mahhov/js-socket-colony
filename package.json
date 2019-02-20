@@ -2,17 +2,17 @@
   "name": "jssocket",
   "version": "1.0.0",
   "description": "",
-  "main": "socketServer.js",
+  "main": "out/socketServer.js",
   "scripts": {
-    "server": "node out/socketServer.js",
-    "build": "rm -rf out; mkdir out; cp {socketServer.js,socketClient.html} out/; browserify ./socketClient.js -o out/socketClient.js",
-    "dev": "rm -rf out; mkdir out; cp {socketServer.js,socketClient.html} out/; browserify ./socketClient.js -o out/socketClient.js; node out/socketServer",
-    "dev-easy": "node socketServer"
+    "build": "rm -rf out; cp -r src out; browserify src/socketClient.js -o out/socketClient.js; inline-scripts out/socketClient.html out/socketClient.html",
+    "server-windows": "start cmd '/k node out/socketServer'",
+    "dev-windows": "npm run build; npm run server-windows"
   },
-  "author": "",
+  "author": "mahhov1",
   "license": "ISC",
   "devDependencies": {
-    "browserify": "^16.2.3"
+    "browserify": "^16.2.3",
+    "inline-scripts": "0.0.1"
   },
   "dependencies": {
     "ws": "^6.1.3"

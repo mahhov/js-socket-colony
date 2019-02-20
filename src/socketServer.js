@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const HtmlHttpServer = require('./src/HtmlHttpServer');
+const HtmlHttpServer = require('./HtmlHttpServer');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
@@ -385,4 +385,4 @@ setInterval(() => {
 		});
 }, UPDATE_GAME_PERIOD_MS);
 
-new HtmlHttpServer('out/socketClient.html', 3004).start();
+new HtmlHttpServer('./socketClient.html', 3004).start();

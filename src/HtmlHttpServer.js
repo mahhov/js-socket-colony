@@ -1,12 +1,13 @@
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs'); // todo const fs = require('fs').promises;
+const path = require('path');
 const PromiseX = require('./PromiseX');
 
 class FileHttpServer {
-	constructor(path, port) {
+	constructor(relPath, port) {
 		this.readFile = new PromiseX();
 
-		fs.readFile(path, (err, read) => {
+		fs.readFile(path.resolve(__dirname, relPath), (err, read) => {
 			if (err)
 				this.readFile.reject(err);
 			else
