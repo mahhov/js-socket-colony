@@ -6,7 +6,7 @@
   "main": "./out/socketerver.js",
   "scripts": {
     "build": "rm -rf out; cp -r src out; browserify src/socketClient.js -o out/socketClient.js; inline-scripts out/socketClient.html out/socketClient.html",
-    "start": "node ./out/socketerver.js",
+    "start": "npm run build; node ./out/socketerver.js",
     "server-windows": "start cmd '/k node out/socketerver'",
     "dev-windows": "npm run build; npm run server-windows"
   },
