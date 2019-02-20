@@ -2,9 +2,9 @@
   "name": "jssocket",
   "version": "1.0.0",
   "description": "",
-  "main": "out/socketServer.js",
   "scripts": {
     "build": "rm -rf out; cp -r src out; browserify src/socketClient.js -o out/socketClient.js; inline-scripts out/socketClient.html out/socketClient.html",
+    "start": "out/socketServer.js",
     "server-windows": "start cmd '/k node out/socketServer'",
     "dev-windows": "npm run build; npm run server-windows"
   },
@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "ws": "^6.1.3"
+  },
+  "engines": {
+    "node": "11.x"
   }
 }
