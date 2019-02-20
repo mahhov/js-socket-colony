@@ -5,7 +5,7 @@
   "web": "node ./out/socketerver.js",
   "main": "./out/socketerver.js",
   "scripts": {
-    "build": "rm -rf out; cp -r src out; browserify src/socketClient.js -o out/socketClient.js; inline-scripts out/socketClient.html out/socketClient.html",
+    "build": "echo 0; rm -rf out; echo 1; cp -r src out; echo 2; browserify src/socketClient.js -o out/socketClient.js; echo 3; inline-scripts out/socketClient.html out/socketClient.html; echo 4;",
     "install": "npm run build",
     "start": "npm run build; node ./out/socketerver.js",
     "server-windows": "start cmd '/k node out/socketerver'",
