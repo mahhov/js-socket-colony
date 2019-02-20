@@ -2,6 +2,7 @@
   "name": "jssocket",
   "version": "1.0.0",
   "description": "",
+  "web": "node ./out/socketServer.js",
   "scripts": {
     "build": "rm -rf out; cp -r src out; browserify src/socketClient.js -o out/socketClient.js; inline-scripts out/socketClient.html out/socketClient.html",
     "start": "node ./out/socketServer.js",
