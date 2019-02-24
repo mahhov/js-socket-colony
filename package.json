@@ -2,24 +2,19 @@
   "name": "jssocket",
   "version": "1.0.0",
   "description": "",
-  "web": "node ./out/socketerver.js",
-  "main": "./out/socketerver.js",
   "scripts": {
-    "build": "echo 0; rm -rf out; echo 1; cp -r src out; echo 2; browserify src/socketClient.js -o out/socketClient.js; echo 3; inline-scripts out/socketClient.html out/socketClient.html; echo 4;",
+    "build": "rm -rf out; cp -r src out; inline-requires src/socketClient.js -o out/socketClient.js; inline-script-tags out/socketClient.html out/socketClient.html",
     "install": "npm run build",
-    "start": "npm run build; node ./out/socketerver.js",
-    "server-windows": "start cmd '/k node out/socketerver'",
-    "dev-windows": "npm run build; npm run server-windows"
+    "start": "node ./out/socketServer.js",
+    "dev-server-windows": "cmd /V \"/k set PORT=5000 & node out/socketServer\"",
+    "dev-windows": "npm run build; npm run dev-server-windows"
   },
   "author": "mahhov1",
   "license": "ISC",
-  "devDependencies": {
-
-  },
+  "devDependencies": {},
   "dependencies": {
-    "ws": "^6.1.3",
-    "browserify": "^16.2.3",
-    "inline-scripts": "0.0.1"
+    "inline-scripts": "0.0.2",
+    "ws": "^6.1.3"
   },
   "engines": {
     "node": "11.x"
