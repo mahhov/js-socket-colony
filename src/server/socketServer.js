@@ -193,9 +193,8 @@ class Game {
 }
 
 class Net {
-	constructor(port, messageHandler) {
-		this.wss = new WebSocket.Server({port});
-		console.log('port:', port);
+	constructor(server, messageHandler) {
+		this.wss = new WebSocket.Server({server});
 		this.wss.on('connection', ws => ws.on('message', message => {
 			try {
 				messageHandler(ws, JSON.parse(message));
@@ -322,8 +321,11 @@ class Server {
 	}
 }
 
+let htmlHttpServer = new HtmlHttpServer('../socketClient.html', process.env.PORT || 5000);
+htmlHttpServer.start();
+
 let server = new Server();
-let net = new Net(process.env.PORT, (netClient, message) => {
+let net = new Net(htmlHttpServer.server, (netClient, message) => {
 	let client = server.findClient(message.clientId);
 	let game = server.findGame(message.gameId);
 
@@ -384,5 +386,3 @@ setInterval(() => {
 			});
 		});
 }, UPDATE_GAME_PERIOD_MS);
-
-new HtmlHttpServer('./socketClient.html', process.env.CLIENT_PORT).start();

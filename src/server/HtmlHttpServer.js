@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs'); // todo const fs = require('fs').promises;
 const path = require('path');
-const PromiseX = require('./PromiseX');
+const PromiseX = require('../PromiseX');
 
 class FileHttpServer {
 	constructor(relPath, port) {
@@ -18,10 +18,11 @@ class FileHttpServer {
 	}
 
 	start() {
-		http.createServer(async (request, response) => {
+		this.server = http.createServer(async (request, response) => {
 			response.writeHeader(200, {"Content-Type": "text/html"});
 			response.end(await this.readFile);
-		}).listen(this.port);
+		});
+		this.server.listen(this.port);
 	}
 }
 
