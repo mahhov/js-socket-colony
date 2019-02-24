@@ -385,4 +385,4 @@ setInterval(() => {
 		});
 }, UPDATE_GAME_PERIOD_MS);
 
-// new HtmlHttpServer('./socketClient.html', 3004).start();
+new HtmlHttpServer('./socketClient.html', process.env.CLIENT_PORT).start();
