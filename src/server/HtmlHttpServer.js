@@ -1,17 +1,19 @@
 const http = require('http');
-const fs = require('fs').promises;
 const path = require('path');
+const inlineScripts = require('inline-scripts');
 
 class FileHttpServer {
 	constructor(relPath, port) {
-		this.readFile = fs.readFile(path.resolve(__dirname, relPath));
+		let htmlPath = path.resolve(__dirname, relPath);
+		process.env.SERVER_WS_ENDPIONT = process.env.SERVER_WS_ENDPOINT || 'ws://localhost:5000';
+		this.readFile_ = inlineScripts.inlineEnvironmentVariables(htmlPath);
 		this.port = port;
 	}
 
 	start() {
 		this.server = http.createServer(async (request, response) => {
 			response.writeHeader(200, {"Content-Type": "text/html"});
-			response.end(await this.readFile);
+			response.end(await this.readFile_);
 		});
 		this.server.listen(this.port);
 	}

@@ -1,7 +1,7 @@
 const PromiseX = require('./PromiseX');
 
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
-const SERVER_URL = 'ws://localhost:' + process.env.PORT;
+const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
 const DEBUG_GAME_VIEW = false;
 
 const GAME_STATE_ENUM = {
