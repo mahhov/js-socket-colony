@@ -202,13 +202,6 @@ class Net {
 			}
 		}));
 	}
-
-	send(clients, data) {
-		let stringData = JSON.stringify(data);
-		clients
-			.filter(client => client.readyState === WebSocket.OPEN)
-			.forEach(client => client.send(stringData));
-	}
 }
 
 class Server {
@@ -235,14 +228,7 @@ class Server {
 	}
 
 	createClient(netClient) {
-		let client = {
-			id: Server.randId,
-			name: Server.randName,
-			state: CLIENT_STATE_ENUM.LOBBY,
-			game: null,
-			inputs: new Inputs(),
-			netClient,
-		};
+		let client = new ClientInterface(netClient);
 		this.clients.push(client);
 		return client;
 	}
@@ -289,14 +275,9 @@ class Server {
 		client.inputs.accumulateInput(input);
 	}
 
-	getLobbyNetClients() {
+	getLobbyClients() {
 		return this.clients
-			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS)
-			.map(client => client.netClient);
-	}
-
-	static getGameClients(game) {
-		return game.clients.map(client => client.netClient);
+			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS);
 	}
 
 	static getGameMessage(game) {
@@ -311,13 +292,43 @@ class Server {
 
 	cleanClosedClientsAndGames() {
 		this.clients = this.clients.filter(client => {
-			if (client.netClient.readyState !== WebSocket.CLOSED)
+			if (client.isAlive())
 				return true;
 			if (client.game)
 				this.leaveGame(client);
 		});
 
 		this.games = this.games.filter(game => game.clients.length);
+	}
+}
+
+class ClientInterface {
+	constructor(netClient) {
+		this.id = Server.randId;
+		this.name = Server.randName;
+		this.state = CLIENT_STATE_ENUM.LOBBY;
+		this.game = null;
+		this.inputs = new Inputs();
+		this.netClient = netClient;
+	}
+
+	isAlive() {
+		return this.netClient.readyState !== WebSocket.CLOSED;
+	}
+
+	send(data) {
+		ClientInterface.sendToNetClient(this.netClient, data);
+	}
+
+	static sendToClients(clients, data) {
+		clients.forEach(client => client.send(data));
+	}
+
+	static sendToNetClient(netClient, data) {
+		if (netClient.readyState !== WebSocket.OPEN)
+			return;
+		let stringData = JSON.stringify(data);
+		netClient.send(stringData);
 	}
 }
 
@@ -332,7 +343,7 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 	switch (message.type) {
 		case 'create-client':
 			let {id, name} = server.createClient(netClient);
-			net.send([netClient], {type: 'created-client', id, name});
+			ClientInterface.sendToNetClient(netClient, {type: 'created-client', id, name});
 			break;
 		case 'change-client-name':
 			if (client)
@@ -341,7 +352,7 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 		case 'create-game':
 			if (client) {
 				let {id, name} = server.createAndJoinGame(client);
-				net.send([netClient], {type: 'created-game', id, name});
+				ClientInterface.sendToNetClient(netClient, {type: 'created-game', id, name});
 			}
 			break;
 		case 'join-game':
@@ -365,7 +376,7 @@ setInterval(() => {
 	server.cleanClosedClientsAndGames();
 
 	let clientNames = server.clients.map(({name}) => name);
-	net.send(server.getLobbyNetClients(), {
+	ClientInterface.sendToClients(server.getLobbyClients(), {
 		type: 'lobby',
 		population: server.clients.length,
 		clientNames,
@@ -378,7 +389,7 @@ setInterval(() => {
 			if (inProgress)
 				game.gameCore.update(game.clients.map(({inputs}) => inputs));
 			let clientNames = game.clients.map(({name}) => name);
-			net.send(Server.getGameClients(game), {
+			ClientInterface.sendToClients(game.clients, {
 				type: 'game',
 				clientNames,
 				data: inProgress && game.gameCore.getStateDiff(),
