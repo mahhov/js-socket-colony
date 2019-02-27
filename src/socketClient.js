@@ -28,7 +28,8 @@ class View {
 	}
 
 	addCreateGameListener(listener) {
-		this.$('#create-game-button').addEventListener('click', listener);
+		this.$('#create-game-button').addEventListener('click', () => listener({bot: false}));
+		this.$('#create-bot-game-button').addEventListener('click', () => listener({bot: true}));
 	}
 
 	addJoinGameListener(listener) {
@@ -338,10 +339,11 @@ class Client {
 		});
 	}
 
-	createGame() {
+	createGame(config) {
 		netClient.send({
 			type: 'create-game',
 			clientId: this.clientId,
+			config,
 		});
 	}
 
@@ -418,7 +420,7 @@ let netClient = new NetClient(SERVER_URL, message => {
 });
 
 view.addUsernameChangeListener(name => client.requestUsernameChange(name));
-view.addCreateGameListener(() => client.createGame());
+view.addCreateGameListener(config => client.createGame(config));
 view.addJoinGameListener(gameId => client.joinGame(gameId));
 view.addLeaveGameListener(() => client.leaveGame());
 
