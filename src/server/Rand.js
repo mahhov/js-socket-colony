@@ -5,4 +5,8 @@ let randName = () => {
 	return NAMES[parseInt(Math.random() * NAMES.length)];
 };
 
-module.exports = {randId, randName};
+let randInt = max => parseInt(Math.random() * max);
+
+module.exports = {randId, randName, randInt};
+
+// todo move out of server dir

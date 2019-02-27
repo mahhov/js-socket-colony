@@ -60,12 +60,18 @@ class BotClientInterface extends ClientInterface {
 		return this.game.clients.length === 2;
 	}
 
-	send(data) {
-		console.log('bot recieved', data)
+	send(message) {
+		let data = message.data;
 
-		/* todo react to data */
+		if (data.turn !== 1)
+			return;
 
-		/* todo set this.inputs */
+		let colonyBot = new ColonyBot();
+		colonyBot.initialize(data.width, data.height, 2);
+		let play = colonyBot.play(data.board);
+		if (!play)
+			return;
+		this.game.gameCore.applyMove(play.move.from, play.move.to, 2);
 	}
 }
 

@@ -41,14 +41,17 @@ class Game {
 		let tile = this.board[mouseInput.x][mouseInput.y];
 		if (tile === this.turn + 1)
 			this.selected = mouseInput;
-		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 1)) {
-			this.propagate(mouseInput, this.turn + 1);
-			this.changeTurn();
-		} else if (tile === 0 && Game.areNear(mouseInput, this.selected, 2)) {
-			this.propagate(mouseInput, this.turn + 1);
-			this.remove(this.selected);
-			this.changeTurn();
-		}
+		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 1))
+			this.applyMove(null, mouseInput, this.turn + 1);
+		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 2))
+			this.applyMove(this.selected, mouseInput, this.turn + 1);
+	}
+
+	applyMove(from, to, tile) {
+		this.propagate(to, tile);
+		if (from)
+			this.remove(from);
+		this.changeTurn()
 	}
 
 	static areNear(p1, p2, dist) {
@@ -130,6 +133,13 @@ class Server {
 		return client;
 	}
 
+	createBotClient() {
+		let bot = new BotClientInterface();
+		// todo keep in separate list and don't send unnecessary updates
+		this.clients.push(bot);
+		return bot;
+	}
+
 	static changeClientName(client, name) {
 		client.name = name;
 	}
@@ -145,7 +155,7 @@ class Server {
 		this.games.push(game);
 		this.joinGame(client, game);
 		if (config.bot)
-			this.joinGame(new BotClientInterface(), game);
+			this.joinGame(this.createBotClient(), game);
 		return game;
 	}
 
