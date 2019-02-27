@@ -1,13 +1,10 @@
 const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
+const Rand = require('./rand');
+const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
-
-const CLIENT_STATE_ENUM = {
-	LOBBY: 0,
-	IN_GAME: 1,
-};
 
 const GAME_STATE_ENUM = {
 	WAITING_FOR_PLAYERS: 0,
@@ -22,97 +19,6 @@ const KEY_ENUM = {
 	UP: 'w',
 	MOUSE: 'mouse',
 };
-
-const KEY_STATE_ENUM = {
-	UP: 0,
-	DOWN: 1,
-	PRESSED: 2,
-	TAPPED: 3,
-};
-
-const INPUT_STATE_ENUM = {
-	RELEASED: 1,
-	PRESSED: 2,
-	TAPPED: 3
-};
-
-class Inputs {
-	constructor() {
-		this.keys = {};
-		this.mouse = {};
-		this.resetAccumulatedInputs();
-	}
-
-	resetAccumulatedInputs() {
-		this.accumulatedInputs = {
-			keys: {},
-			mouse: null,
-		};
-	}
-
-	isDown(key) {
-		return !!this.keys[key];
-	}
-
-	isTriggered(key) {
-		return this.keys[key] === KEY_STATE_ENUM.PRESSED || this.keys[key] === KEY_STATE_ENUM.TAPPED
-	}
-
-	accumulateInput(input) {
-		this.accumulateKeyInput(input.keys);
-		if (input.mouse.x && input.mouse.y)
-			this.accumulatedInputs.mouse = input.mouse;
-	}
-
-	accumulateKeyInput(input) {
-		Object.entries(input).forEach(([key, value]) => {
-			if (value !== INPUT_STATE_ENUM.RELEASED)
-				this.accumulatedInputs.keys[key] = value;
-
-			// null -> release
-			// release -> release
-			// pressed -> tapped
-			// tapped -> tapped
-			else if (this.accumulatedInputs.keys[key] === INPUT_STATE_ENUM.PRESSED)
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.TAPPED;
-			else if (!this.accumulatedInputs.keys[key])
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.RELEASED;
-		});
-	}
-
-	applyAccumulatedInputs() {
-		// age keys
-		Object.entries(this.keys).forEach(([key, value]) => {
-			if (value === KEY_STATE_ENUM.PRESSED)
-				this.keys[key] = KEY_STATE_ENUM.DOWN;
-			else if (value === KEY_STATE_ENUM.TAPPED)
-				this.keys[key] = KEY_STATE_ENUM.UP;
-		});
-
-		// apply accumulatedInputs to keys
-		Object.entries(this.accumulatedInputs.keys).forEach(([key, value]) => {
-			switch (value) {
-				case INPUT_STATE_ENUM.RELEASED:
-					this.keys[key] = KEY_STATE_ENUM.UP;
-					break;
-				case INPUT_STATE_ENUM.PRESSED:
-					if (this.keys[key] !== KEY_STATE_ENUM.DOWN)
-						this.keys[key] = KEY_STATE_ENUM.PRESSED;
-					break;
-				case INPUT_STATE_ENUM.TAPPED:
-					this.keys[key] = KEY_STATE_ENUM.TAPPED;
-					break;
-
-			}
-		});
-
-		// update mouse
-		if (this.accumulatedInputs.mouse)
-			this.mouse = this.accumulatedInputs.mouse;
-
-		this.resetAccumulatedInputs();
-	}
-}
 
 class Game {
 	constructor(width = 10, height = 10) {
@@ -210,15 +116,6 @@ class Server {
 		this.games = [];
 	}
 
-	static get randId() {
-		return parseInt(Math.random() * 1e15) + 1;
-	}
-
-	static get randName() {
-		const NAMES = ['alligator', 'crocodile', 'alpaca', 'ant', 'antelope', 'ape', 'armadillo', 'donkey', 'baboon', 'badger', 'bat', 'bear', 'beaver', 'bee', 'beetle', 'buffalo', 'butterfly', 'camel', 'carabao', 'water buffalo', 'caribou', 'cat', 'cattle', 'cheetah', 'chimpanzee', 'chinchilla', 'cicada', 'clam', 'cockroach', 'cod', 'coyote', 'crab', 'cricket', 'crow', 'raven', 'deer', 'dinosaur', 'dog', 'dolphin', 'porpoise', 'duck', 'eagle', 'echidna', 'eel', 'elephant', 'elk', 'ferret', 'fish', 'fly', 'fox', 'frog', 'toad', 'gerbil', 'giraffe', 'gnat', 'gnu', 'wildebeest', 'goat', 'goldfish', 'goose', 'gorilla', 'grasshopper', 'guinea pig', 'hamster', 'hare', 'hedgehog', 'herring', 'hippopotamus', 'hornet', 'horse', 'hound', 'hyena', 'impala', 'insect', 'jackal', 'jellyfish', 'kangaroo', 'wallaby', 'koala', 'leopard', 'lion', 'lizard', 'llama', 'locust', 'louse', 'macaw', 'mallard', 'mammoth', 'manatee', 'marten', 'mink', 'minnow', 'mole', 'monkey', 'moose', 'mosquito', 'mouse', 'rat', 'mule', 'muskrat', 'otter', 'ox', 'oyster', 'panda', 'pig', 'hog', 'swine', 'wild pig', 'platypus', 'porcupine', 'prairie dog', 'pug', 'rabbit', 'raccoon', 'reindeer', 'rhinoceros', 'salmon', 'sardine', 'scorpion', 'seal', 'sea lion', 'serval', 'shark', 'sheep', 'skunk', 'snail', 'snake', 'spider', 'squirrel', 'swan', 'termite', 'tiger', 'trout', 'turtle', 'tortoise', 'walrus', 'wasp', 'weasel', 'whale', 'wolf', 'wombat', 'woodchuck', 'worm', 'yak', 'yellowjacket', 'zebra'];
-		return NAMES[parseInt(Math.random() * NAMES.length)];
-	}
-
 	findClient(clientId) {
 		return this.clients.find(({id}) => id === clientId);
 	}
@@ -227,8 +124,8 @@ class Server {
 		return this.games.find(({id}) => id === gameId);
 	}
 
-	createClient(netClient) {
-		let client = new ClientInterface(netClient);
+	createPlayerClient(netClient) {
+		let client = new PlayerClientInterface(netClient);
 		this.clients.push(client);
 		return client;
 	}
@@ -237,16 +134,18 @@ class Server {
 		client.name = name;
 	}
 
-	createAndJoinGame(client) {
+	createAndJoinGame(client, config) {
 		let game = {
-			id: Server.randId,
-			name: Server.randName,
+			id: Rand.randId(),
+			name: Rand.randName(),
 			state: GAME_STATE_ENUM.WAITING_FOR_PLAYERS,
 			requiredClients: NUM_CLIENTS_PER_GAME,
 			clients: [],
 		};
 		this.games.push(game);
 		this.joinGame(client, game);
+		if (config.bot)
+			this.joinGame(new BotClientInterface(), game);
 		return game;
 	}
 
@@ -302,36 +201,6 @@ class Server {
 	}
 }
 
-class ClientInterface {
-	constructor(netClient) {
-		this.id = Server.randId;
-		this.name = Server.randName;
-		this.state = CLIENT_STATE_ENUM.LOBBY;
-		this.game = null;
-		this.inputs = new Inputs();
-		this.netClient = netClient;
-	}
-
-	isAlive() {
-		return this.netClient.readyState !== WebSocket.CLOSED;
-	}
-
-	send(data) {
-		ClientInterface.sendToNetClient(this.netClient, data);
-	}
-
-	static sendToClients(clients, data) {
-		clients.forEach(client => client.send(data));
-	}
-
-	static sendToNetClient(netClient, data) {
-		if (netClient.readyState !== WebSocket.OPEN)
-			return;
-		let stringData = JSON.stringify(data);
-		netClient.send(stringData);
-	}
-}
-
 let htmlHttpServer = new HtmlHttpServer('../socketClient.html', process.env.PORT || 5000);
 htmlHttpServer.start();
 
@@ -342,8 +211,8 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 
 	switch (message.type) {
 		case 'create-client':
-			let {id, name} = server.createClient(netClient);
-			ClientInterface.sendToNetClient(netClient, {type: 'created-client', id, name});
+			let {id, name} = server.createPlayerClient(netClient);
+			PlayerClientInterface.sendToNetClient(netClient, {type: 'created-client', id, name});
 			break;
 		case 'change-client-name':
 			if (client)
@@ -351,8 +220,8 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 			break;
 		case 'create-game':
 			if (client) {
-				let {id, name} = server.createAndJoinGame(client);
-				ClientInterface.sendToNetClient(netClient, {type: 'created-game', id, name});
+				let {id, name} = server.createAndJoinGame(client, message.config);
+				PlayerClientInterface.sendToNetClient(netClient, {type: 'created-game', id, name});
 			}
 			break;
 		case 'join-game':
