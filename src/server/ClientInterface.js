@@ -21,11 +21,11 @@ class ClientInterface {
 		return false;
 	}
 
-	send(data) {
+	send(message) {
 	}
 
-	static sendToClients(clients, data) {
-		clients.forEach(client => client.send(data));
+	static sendToClients(clients, message) {
+		clients.forEach(client => client.send(message));
 	}
 }
 
@@ -39,15 +39,15 @@ class PlayerClientInterface extends ClientInterface {
 		return this.netClient.readyState !== WebSocket.CLOSED;
 	}
 
-	send(data) {
-		PlayerClientInterface.sendToNetClient(this.netClient, data);
+	send(message) {
+		PlayerClientInterface.sendToNetClient(this.netClient, message);
 	}
 
-	static sendToNetClient(netClient, data) {
+	static sendToNetClient(netClient, message) {
 		if (netClient.readyState !== WebSocket.OPEN)
 			return;
-		let stringData = JSON.stringify(data);
-		netClient.send(stringData);
+		let stringMessage = JSON.stringify(message);
+		netClient.send(stringMessage);
 	}
 }
 
