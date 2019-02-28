@@ -166,7 +166,7 @@ class GameState {
 	}
 
 	resetData() {
-		this.data = {width: 0, height: 0, board: []};
+		this.data = {width: 0, height: 0, tiles: []};
 	}
 
 	setData(data) {
@@ -201,10 +201,10 @@ class GameState {
 	}
 
 	getScores() {
-		let flatBoard = this.data.board.flat();
+		let flatTiles = this.data.tiles.flat();
 		return [
-			flatBoard.filter(a => a === 1).length,
-			flatBoard.filter(a => a === 2).length];
+			flatTiles.filter(a => a === 1).length,
+			flatTiles.filter(a => a === 2).length];
 	}
 
 	getTurnText() {
@@ -214,7 +214,7 @@ class GameState {
 	drawBoard(left, top, tileSize) {
 		for (let x = 0; x < this.data.width; x++)
 			for (let y = 0; y < this.data.height; y++) {
-				let tile = this.data.board[x][y];
+				let tile = this.data.tiles[x][y];
 				let selected = tile ?
 					x === this.data.selected.x && y === this.data.selected.y :
 					(x + y) % 2;
@@ -433,7 +433,7 @@ if (DEBUG_GAME_VIEW) {
 	gameState.setData({
 		'width': 10,
 		'height': 10,
-		'board': [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 0, 0], [0, 0, 2, 2, 2, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],
+		'tiles': [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 0, 0], [0, 0, 2, 2, 2, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],
 		'turn': 0,
 		'selected': {}
 	});
@@ -442,4 +442,3 @@ if (DEBUG_GAME_VIEW) {
 // todo send input-game only if game started
 // todo hover tile
 // todo keep displaying lobby until games starts
-// todo ai

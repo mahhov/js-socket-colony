@@ -75,7 +75,7 @@ class Game {
 		return {
 			width: this.board.width,
 			height: this.board.height,
-			board: this.board.tiles, // todo rename tiles (in socketClient and clientInterface)
+			tiles: this.board.tiles,
 			turn: this.turn,
 			selected: this.selected,
 		};

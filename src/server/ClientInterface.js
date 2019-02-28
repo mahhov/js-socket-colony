@@ -66,7 +66,7 @@ class BotClientInterface extends ClientInterface {
 		if (data.turn !== 1)
 			return;
 
-		let colonyBot = new ColonyBot(data.board, 2); // todo don't construct new instance each time
+		let colonyBot = new ColonyBot(data.tiles, 2); // todo don't construct new instance each time
 		let play = colonyBot.play();
 		if (!play)
 			return;
