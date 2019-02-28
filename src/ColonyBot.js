@@ -5,7 +5,6 @@ class ColonyBot {
 	constructor(tiles, tile) {
 		this.board = Board.createFromTiles(tiles);
 		this.tile = tile;
-		console.log('this tile', tile, 'width', this.board.width, 'height', this.board.height)
 	}
 
 	play() {

@@ -52,10 +52,6 @@ class PlayerClientInterface extends ClientInterface {
 }
 
 class BotClientInterface extends ClientInterface {
-	constructor() {
-		super();
-	}
-
 	isAlive() {
 		return this.game.clients.length === 2;
 	}
@@ -66,11 +62,10 @@ class BotClientInterface extends ClientInterface {
 		if (data.turn !== 1)
 			return;
 
-		let colonyBot = new ColonyBot(data.tiles, 2); // todo don't construct new instance each time
-		let play = colonyBot.play();
-		if (!play)
-			return;
-		this.game.applyMove(play.move.from, play.move.to, 2);
+		this.colonyBot = this.colonyBot || new ColonyBot(data.tiles, 2);
+		let play = this.colonyBot.play();
+		if (play)
+			this.game.applyMove(play.move.from, play.move.to, 2);
 	}
 }
 

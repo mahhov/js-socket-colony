@@ -49,7 +49,6 @@ class Game {
 			this.applyMove(null, mouseInput, this.turn + 1);
 		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 2))
 			this.applyMove(this.selected, mouseInput, this.turn + 1);
-
 	}
 
 	applyMove(from, to, tile) {
