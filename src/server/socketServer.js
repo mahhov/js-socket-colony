@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
 const Rand = require('./rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
+const Board = require('../Board');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
@@ -21,12 +22,15 @@ const KEY_ENUM = {
 };
 
 class Game {
-	constructor(width = 10, height = 10) {
-		this.width = width;
-		this.height = height;
-		this.board = Array(width).fill().map(() => Array(height).fill(0));
-		this.board[0][0] = 1;
-		this.board[width - 1][height - 1] = 2;
+	constructor() {
+		this.id = Rand.randId();
+		this.name = Rand.randName();
+		this.state = GAME_STATE_ENUM.WAITING_FOR_PLAYERS;
+		this.requiredClients = NUM_CLIENTS_PER_GAME;
+		this.clients = [];
+
+		// todo create sub class ColonyGame
+		this.board = new Board();
 		this.turn = 0;
 		this.selected = {};
 	}
@@ -38,40 +42,16 @@ class Game {
 		let mouseInput = this.getMouseInput(inputsList[this.turn]);
 		if (!mouseInput)
 			return;
-		let tile = this.board[mouseInput.x][mouseInput.y];
+		let tile = this.board.tiles[mouseInput.x][mouseInput.y];
 		if (tile === this.turn + 1)
 			this.selected = mouseInput;
-		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 1))
-			this.applyMove(null, mouseInput, this.turn + 1);
-		else if (tile === 0 && Game.areNear(mouseInput, this.selected, 2))
-			this.applyMove(this.selected, mouseInput, this.turn + 1);
-	}
-
-	applyMove(from, to, tile) {
-		this.propagate(to, tile);
-		if (from)
-			this.remove(from);
-		this.changeTurn()
-	}
-
-	static areNear(p1, p2, dist) {
-		return Math.abs(p1.x - p2.x) <= dist && Math.abs(p1.y - p2.y) <= dist;
-	}
-
-	propagate(point, tile) {
-		for (let x = point.x - 1; x <= point.x + 1; x++)
-			for (let y = point.y - 1; y <= point.y + 1; y++)
-				if (this.inBounds(x, y) && this.board[x][y])
-					this.board[x][y] = tile;
-		this.board[point.x][point.y] = tile
-	}
-
-	remove(point) {
-		this.board[point.x][point.y] = 0;
-	}
-
-	inBounds(x, y) {
-		return x >= 0 && x < this.width && y >= 0 && y < this.height;
+		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 1)) {
+			this.board.applyMove(null, mouseInput, this.turn + 1);
+			this.changeTurn();
+		} else if (tile === 0 && Board.areNear(mouseInput, this.selected, 2)) {
+			this.board.applyMove(this.selected, mouseInput, this.turn + 1);
+			this.changeTurn();
+		}
 	}
 
 	changeTurn() {
@@ -82,22 +62,20 @@ class Game {
 	getMouseInput(inputs) {
 		if (!inputs || !inputs.isTriggered(KEY_ENUM.MOUSE))
 			return;
-		let x = Math.floor(this.width * inputs.mouse.x);
-		let y = Math.floor(this.height * inputs.mouse.y);
-		if (x < 0 || x >= this.width || y < 0 || y >= this.height)
-			return;
-		return {x, y};
+		let x = Math.floor(this.board.width * inputs.mouse.x);
+		let y = Math.floor(this.board.height * inputs.mouse.y);
+		if (this.board.inBounds(x, y))
+			return {x, y};
 	}
 
 	getStateDiff() {
-		return this;
-		// return {
-		// 	width: this.width,
-		// 	height: this.height,
-		// 	board: this.board,
-		// 	turn: this.turn,
-		// 	selected: this.selected,
-		// };
+		return {
+			width: this.board.width,
+			height: this.board.height,
+			board: this.board.tiles, // todo rename tiles
+			turn: this.turn,
+			selected: this.selected,
+		};
 	}
 }
 
@@ -145,13 +123,7 @@ class Server {
 	}
 
 	createAndJoinGame(client, config) {
-		let game = {
-			id: Rand.randId(),
-			name: Rand.randName(),
-			state: GAME_STATE_ENUM.WAITING_FOR_PLAYERS,
-			requiredClients: NUM_CLIENTS_PER_GAME,
-			clients: [],
-		};
+		let game = new Game();
 		this.games.push(game);
 		this.joinGame(client, game);
 		if (config.bot)
