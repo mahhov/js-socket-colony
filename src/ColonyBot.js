@@ -29,7 +29,7 @@ class ColonyBot {
 				if (this.board.tiles[x][y] === 0) {
 					let nearbyOwned = this.board.getNearbyInBoundsOfTile(x, y, 1, this.tile);
 					if (nearbyOwned.length)
-						moves.push({to: {x, y}});
+						moves.push({from: nearbyOwned[0], to: {x, y}});
 				} else if (this.board.tiles[x][y] === this.tile)
 					moves.push(
 						this.board.getNearbyInBoundsOfTile(x, y, 2, 0)

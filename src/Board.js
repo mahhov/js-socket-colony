@@ -15,9 +15,13 @@ class Board {
 	}
 
 	applyMove(from, to, tile) {
+		let dist = Board.dist(from, to);
+		if (dist > 2 || dist === 0 || this.tiles[from.x][from.y] !== tile || this.tiles[to.x][to.y])
+			return;
 		this.propagate(to, tile);
-		if (from)
+		if (dist === 2)
 			this.remove(from);
+		return true;
 	}
 
 	propagate(point, tile) {
@@ -43,8 +47,13 @@ class Board {
 		return x >= 0 && x < this.width && y >= 0 && y < this.height;
 	}
 
+	// todo necessary?
 	static areNear(p1, p2, dist) {
 		return Math.abs(p1.x - p2.x) <= dist && Math.abs(p1.y - p2.y) <= dist;
+	}
+
+	static dist(p1, p2) {
+		return Math.max(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
 	}
 
 	static getNearby(x, y, dist) {

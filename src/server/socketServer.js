@@ -13,14 +13,6 @@ const GAME_STATE_ENUM = {
 	ABANDONED: 2,
 };
 
-const KEY_ENUM = {
-	LEFT: 'a',
-	RIGHT: 'd',
-	DOWN: 's',
-	UP: 'w',
-	MOUSE: 'mouse',
-};
-
 class Game {
 	constructor() {
 		this.id = Rand.randId();
@@ -35,25 +27,14 @@ class Game {
 		this.selected = {};
 	}
 
-	update(inputsList) {
-		inputsList.forEach((inputs, i) =>
-			inputs.applyAccumulatedInputs());
-
-		let mouseInput = this.getMouseInput(inputsList[this.turn]);
-		if (!mouseInput)
-			return;
-		let tile = this.board.tiles[mouseInput.x][mouseInput.y];
-		if (tile === this.turn + 1)
-			this.selected = mouseInput;
-		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 1))
-			this.applyMove(null, mouseInput, this.turn + 1);
-		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 2))
-			this.applyMove(this.selected, mouseInput, this.turn + 1);
+	play() {
+		this.clients.forEach(client => client.iter());
+		this.clients[this.turn].play();
 	}
 
 	applyMove(from, to, tile) {
-		this.board.applyMove(from, to, tile);
-		this.changeTurn()
+		if (this.board.applyMove(from, to, tile))
+			this.changeTurn()
 	}
 
 	changeTurn() {
@@ -61,13 +42,8 @@ class Game {
 		this.selected = {};
 	}
 
-	getMouseInput(inputs) {
-		if (!inputs || !inputs.isTriggered(KEY_ENUM.MOUSE))
-			return;
-		let x = Math.floor(this.board.width * inputs.mouse.x);
-		let y = Math.floor(this.board.height * inputs.mouse.y);
-		if (this.board.inBounds(x, y))
-			return {x, y};
+	select(selected) {
+		this.selected = selected;
 	}
 
 	getStateDiff() {
@@ -108,13 +84,13 @@ class Server {
 	}
 
 	createPlayerClient(netClient) {
-		let client = new PlayerClientInterface(netClient);
-		this.clients.push(client);
-		return client;
+		let player = new PlayerClientInterface(this.clients.length, netClient);
+		this.clients.push(player);
+		return player;
 	}
 
 	createBotClient() {
-		let bot = new BotClientInterface();
+		let bot = new BotClientInterface(this.clients.length);
 		// todo keep in separate list and don't send unnecessary updates
 		this.clients.push(bot);
 		return bot;
@@ -238,7 +214,7 @@ setInterval(() => {
 		.forEach(game => {
 			let inProgress = game.state === GAME_STATE_ENUM.IN_PROGRESS;
 			if (inProgress)
-				game.update(game.clients.map(({inputs}) => inputs));
+				game.play();
 			let clientNames = game.clients.map(({name}) => name);
 			ClientInterface.sendToClients(game.clients, {
 				type: 'game',
