@@ -66,12 +66,11 @@ class BotClientInterface extends ClientInterface {
 		if (data.turn !== 1)
 			return;
 
-		let colonyBot = new ColonyBot();
-		colonyBot.initialize(data.width, data.height, 2);
-		let play = colonyBot.play(data.board);
+		let colonyBot = new ColonyBot(data.board, 2); // todo don't construct new instance each time
+		let play = colonyBot.play();
 		if (!play)
 			return;
-		this.game.gameCore.applyMove(play.move.from, play.move.to, 2);
+		this.game.applyMove(play.move.from, play.move.to, 2);
 	}
 }
 

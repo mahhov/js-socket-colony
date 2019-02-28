@@ -45,13 +45,16 @@ class Game {
 		let tile = this.board.tiles[mouseInput.x][mouseInput.y];
 		if (tile === this.turn + 1)
 			this.selected = mouseInput;
-		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 1)) {
-			this.board.applyMove(null, mouseInput, this.turn + 1);
-			this.changeTurn();
-		} else if (tile === 0 && Board.areNear(mouseInput, this.selected, 2)) {
-			this.board.applyMove(this.selected, mouseInput, this.turn + 1);
-			this.changeTurn();
-		}
+		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 1))
+			this.applyMove(null, mouseInput, this.turn + 1);
+		else if (tile === 0 && Board.areNear(mouseInput, this.selected, 2))
+			this.applyMove(this.selected, mouseInput, this.turn + 1);
+
+	}
+
+	applyMove(from, to, tile) {
+		this.board.applyMove(from, to, tile);
+		this.changeTurn()
 	}
 
 	changeTurn() {
@@ -72,7 +75,7 @@ class Game {
 		return {
 			width: this.board.width,
 			height: this.board.height,
-			board: this.board.tiles, // todo rename tiles
+			board: this.board.tiles, // todo rename tiles (in socketClient and clientInterface)
 			turn: this.turn,
 			selected: this.selected,
 		};
@@ -139,10 +142,8 @@ class Server {
 		client.game = game;
 		client.state = CLIENT_STATE_ENUM.IN_GAME;
 		game.clients.push(client);
-		if (game.clients.length === NUM_CLIENTS_PER_GAME) {
+		if (game.clients.length === NUM_CLIENTS_PER_GAME)
 			game.state = GAME_STATE_ENUM.IN_PROGRESS;
-			game.gameCore = new Game();
-		}
 	}
 
 	leaveGame(client) {
@@ -238,12 +239,12 @@ setInterval(() => {
 		.forEach(game => {
 			let inProgress = game.state === GAME_STATE_ENUM.IN_PROGRESS;
 			if (inProgress)
-				game.gameCore.update(game.clients.map(({inputs}) => inputs));
+				game.update(game.clients.map(({inputs}) => inputs));
 			let clientNames = game.clients.map(({name}) => name);
 			ClientInterface.sendToClients(game.clients, {
 				type: 'game',
 				clientNames,
-				data: inProgress && game.gameCore.getStateDiff(),
+				data: inProgress && game.getStateDiff(),
 				game: Server.getGameMessage(game),
 			});
 		});

@@ -7,12 +7,11 @@ class Board {
 		this.tiles[width - 1][height - 1] = 2;
 	}
 
-	static createClone(board) {
-		let clonedBoard = new Board(board.width, board.height);
-		let clonedTiles = [];
-		board.tiles.forEach(tileColumn => clonedTiles.push([...tileColumn]));
-		clonedBoard.tiles = clonedTiles;
-		return clonedBoard;
+	static createFromTiles(tiles) {
+		let board = new Board(tiles.length, tiles[0].length);
+		board.tiles = [];
+		tiles.forEach(tileColumn => board.tiles.push([...tileColumn]));
+		return board;
 	}
 
 	applyMove(from, to, tile) {
@@ -33,11 +32,11 @@ class Board {
 		this.tiles[point.x][point.y] = 0;
 	}
 
-	getNearbyInBoundsOfTile(board, x, y, dist, tile) {
+	getNearbyInBoundsOfTile(x, y, dist, tile) {
 		return Board
 			.getNearby(x, y, dist)
 			.filter(({x, y}) => this.inBounds(x, y))
-			.filter(({x, y}) => board[x][y] === tile);
+			.filter(({x, y}) => this.tiles[x][y] === tile);
 	}
 
 	inBounds(x, y) {
