@@ -15,10 +15,7 @@ class ColonyBot {
 				return {score, move};
 			});
 		let maxScore = Math.max(...scoredMoves.map(({score}) => score));
-		console.log('scored moves', scoredMoves.length, scoredMoves)
-		console.log('max score', maxScore)
 		let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
-		console.log('maxScoreMoves', maxScoreMoves.length, maxScoreMoves)
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
 	}
 
@@ -35,7 +32,6 @@ class ColonyBot {
 						this.board.getNearbyInBoundsOfTile(x, y, 2, 0)
 							.map(to => ({from: {x, y}, to})));
 			}
-		console.log('>> moves', moves.flat().length, moves.flat())
 		return moves.flat();
 	}
 
