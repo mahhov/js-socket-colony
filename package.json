@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rm -rf out; cp -r src out; inline-requires src/socketClient.js out/socketClient.js; inline-script-tags out/socketClient.html .",
     "install": "npm run build",
-    "start": "node ./out/server/socketServer.js",
+    "start": "node out/server/socketServer",
     "dev-windows": "npm run build; start cmd //v //k node out/server/socketServer"
   },
   "author": "mahhov1",
