@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const Rand = require('./Rand');
 const Inputs = require('./Inputs');
 const ColonyBot = require('../ColonyBot');
+const Board = require('../Board');
 
 const CLIENT_STATE_ENUM = {
 	LOBBY: 0,
@@ -94,6 +95,8 @@ class PlayerClientInterface extends ClientInterface {
 class BotClientInterface extends ClientInterface {
 	constructor(clientIndex) {
 		super(clientIndex);
+		this.colonyBot = new ColonyBot();
+		this.depth = 1;
 		this.playTimer = 0;
 	}
 
@@ -102,8 +105,7 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	send(message) {
-		// this.colonyBot = this.colonyBot || new ColonyBot(message.data.tiles, this.tile); // todo y not working?
-		this.colonyBot = new ColonyBot(message.data.tiles, this.tile);
+		this.lastMessage = message;
 	}
 
 	play() {
@@ -117,7 +119,8 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	calcPlay() {
-		this.queuedPlay = this.colonyBot.play();
+		let board = Board.createFromTiles(this.lastMessage.data.tiles);
+		this.queuedPlay = this.colonyBot.play(board, this.tile, this.depth);
 	}
 }
 

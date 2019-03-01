@@ -2,16 +2,13 @@ const {randInt} = require('./server/Rand');
 const Board = require('./Board');
 
 class ColonyBot {
-	constructor(tiles, tile) {
-		this.board = Board.createFromTiles(tiles);
-		this.tile = tile;
-	}
-
-	play() {
-		let scoredMoves = this.board.getPossibleMoves()
+	play(board, tile, depth) {
+		let moves = board.getPossibleMoves(tile);
+		// todo if no moves at this depth
+		let scoredMoves = moves
 			.map(move => {
-				let newBoard = this.applyMove(move.from, move.to);
-				let score = this.score(newBoard);
+				let newBoard = ColonyBot.applyMove(board, move.from, move.to, tile);
+				let score = this.scoreDeep(newBoard, tile, depth);
 				return {score, move};
 			});
 		let maxScore = Math.max(...scoredMoves.map(({score}) => score));
@@ -19,13 +16,19 @@ class ColonyBot {
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
 	}
 
-	applyMove(from, to) {
-		let newBoard = Board.createFromTiles(this.board.tiles);
-		newBoard.applyMove(from, to, this.tile);
+	static applyMove(board, from, to, tile) {
+		let newBoard = Board.createFromTiles(board.tiles);
+		newBoard.applyMove(from, to, tile);
 		return newBoard;
 	}
 
-	score(board) {
+	scoreDeep(board, tile, depth) {
+		if (!depth)
+			return this.score(board, tile);
+		return -this.play(board, 3 - tile, depth - 1).score;
+	}
+
+	score(board, tile) {
 		let counts = [0, 0, 0].map((_, i) =>
 			board.tiles
 				.flat(2)
@@ -47,7 +50,7 @@ class ColonyBot {
 
 		let scores = counts.map((count, i) => count * 5 - vulnerabilityScores[i]);
 
-		return scores[this.tile] - scores[3 - this.tile];
+		return scores[tile] - scores[3 - tile];
 	}
 }
 
