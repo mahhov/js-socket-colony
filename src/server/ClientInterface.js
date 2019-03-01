@@ -94,6 +94,7 @@ class PlayerClientInterface extends ClientInterface {
 class BotClientInterface extends ClientInterface {
 	constructor(clientIndex) {
 		super(clientIndex);
+		this.playTimer = 0;
 	}
 
 	isAlive() {
@@ -106,10 +107,17 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	play() {
-		let play = this.colonyBot.play();
-		console.log("=== play", JSON.stringify(play))
-		if (play)
-			this.game.applyMove(play.move.from, play.move.to, this.tile);
+		if (!this.playTimer++) {
+			this.calcPlay();
+			this.game.select(this.queuedPlay.move.from);
+		} else if (this.playTimer === 15) {
+			this.game.applyMove(this.queuedPlay.move.from, this.queuedPlay.move.to, this.tile);
+			this.playTimer = 0;
+		}
+	}
+
+	calcPlay() {
+		this.queuedPlay = this.colonyBot.play();
 	}
 }
 
