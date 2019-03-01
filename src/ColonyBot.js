@@ -57,7 +57,7 @@ class ColonyBot {
 						vulnerabilities[tile][vulnerability]++;
 					}
 
-		const VULNERABILITY_WEIGHTS = [0, 0, 0, 0, 8, 10, 12, 14, 16];
+		const VULNERABILITY_WEIGHTS = [0, 0, 0, 0, 5 * 5 / 8, 6 * 6 / 8, 12, 7 * 7 / 8, 8];
 		let vulnerabilityScores = vulnerabilities.map(vulnerabilities =>
 			VULNERABILITY_WEIGHTS.reduce((score, weight, i) => score + weight * vulnerabilities[i], 0));
 
