@@ -50,15 +50,20 @@ class ColonyBot {
 
 		let vulnerabilities = [0, 0, 0].map(() => new Array(9).fill(0));
 		for (let x = 0; x < board.width; x++)
-			for (let y = 0; y < board.height; y++) {
-				[0, 0, 0].map((_, i) =>
-					board.getNearbyInBoundsOfTile(x, y, 1, i).length)
-					.forEach((vulnerability, tile) => vulnerabilities[tile][vulnerability]++);
-			}
+			for (let y = 0; y < board.height; y++)
+				if (!board.tiles[x][y])
+					for (let tile = 0; tile < 3; tile++) {
+						let vulnerability = board.getNearbyInBoundsOfTile(x, y, 1, tile).length;
+						vulnerabilities[tile][vulnerability]++;
+					}
 
-		// todo consider vulnerabilities (or dont for easy bot)
+		const VULNERABILITY_WEIGHTS = [0, 0, 0, 0, 8, 10, 12, 14, 16];
+		let vulnerabilityScores = vulnerabilities.map(vulnerabilities =>
+			VULNERABILITY_WEIGHTS.reduce((score, weight, i) => score + weight * vulnerabilities[i], 0));
 
-		return counts[this.tile];
+		let scores = counts.map((count, i) => count * 5 - vulnerabilityScores[i]);
+
+		return scores[this.tile] - scores[3 - this.tile];
 	}
 }
 
