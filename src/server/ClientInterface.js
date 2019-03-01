@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const Rand = require('./rand');
+const Rand = require('./Rand');
 const Inputs = require('./Inputs');
 const ColonyBot = require('../ColonyBot');
 

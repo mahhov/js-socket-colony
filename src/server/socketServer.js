@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
-const Rand = require('./rand');
+const Rand = require('./Rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
 const Board = require('../Board');
 
