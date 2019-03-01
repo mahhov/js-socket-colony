@@ -47,11 +47,6 @@ class Board {
 		return x >= 0 && x < this.width && y >= 0 && y < this.height;
 	}
 
-	// todo necessary?
-	static areNear(p1, p2, dist) {
-		return Math.abs(p1.x - p2.x) <= dist && Math.abs(p1.y - p2.y) <= dist;
-	}
-
 	static dist(p1, p2) {
 		return Math.max(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
 	}
