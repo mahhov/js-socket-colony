@@ -16,7 +16,7 @@ class Board {
 
 	applyMove(from, to, tile) {
 		let dist = Board.dist(from, to);
-		if (dist > 2 || dist === 0 || this.tiles[from.x][from.y] !== tile || this.tiles[to.x][to.y])
+		if (isNaN(dist) || dist > 2 || dist === 0 || this.tiles[from.x][from.y] !== tile || this.tiles[to.x][to.y])
 			return;
 		this.propagate(to, tile);
 		if (dist === 2)
