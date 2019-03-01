@@ -4,10 +4,13 @@ const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
 const DEBUG_GAME_VIEW = false;
 
+// todo import these enums instead of duplciated definitions
+
 const GAME_STATE_ENUM = {
 	WAITING_FOR_PLAYERS: 0,
 	IN_PROGRESS: 1,
-	ENDED: 2,
+	ABANDONED: 2,
+	ENDED: 3,
 };
 
 const INPUT_STATE_ENUM = {
@@ -113,8 +116,10 @@ class View {
 				return 'waiting for players';
 			case GAME_STATE_ENUM.IN_PROGRESS:
 				return 'game in progress';
-			case GAME_STATE_ENUM.ENDED:
+			case GAME_STATE_ENUM.ABANDONED:
 				return 'game abandoned';
+			case GAME_STATE_ENUM.ENDED:
+				return 'game ended';
 			default:
 				console.warn('unrecognized game state:', state);
 		}

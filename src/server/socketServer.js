@@ -11,6 +11,7 @@ const GAME_STATE_ENUM = {
 	WAITING_FOR_PLAYERS: 0,
 	IN_PROGRESS: 1,
 	ABANDONED: 2,
+	ENDED: 3,
 };
 
 class Game {
@@ -38,8 +39,12 @@ class Game {
 	}
 
 	changeTurn() {
-		this.turn = ++this.turn % 2;
 		this.selected = {};
+		let nextTurn = ++this.turn % 2;
+		if (this.board.getPossibleMoves(nextTurn + 1).length)
+			this.turn = nextTurn;
+		else if (!this.board.getPossibleMoves(this.turn + 1).length)
+			this.state=GAME_STATE_ENUM.ENDED;
 	}
 
 	select(selected) {
