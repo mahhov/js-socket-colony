@@ -8,7 +8,7 @@ class ColonyBot {
 	}
 
 	play() {
-		let scoredMoves = this.getPossibleMoves_()
+		let scoredMoves = this.board.getPossibleMoves()
 			.map(move => {
 				let newBoard = this.applyMove(move.from, move.to);
 				let score = this.score(newBoard);
@@ -17,22 +17,6 @@ class ColonyBot {
 		let maxScore = Math.max(...scoredMoves.map(({score}) => score));
 		let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
-	}
-
-	getPossibleMoves_() {
-		let moves = [];
-		for (let x = 0; x < this.board.width; x++)
-			for (let y = 0; y < this.board.height; y++) {
-				if (this.board.tiles[x][y] === 0) {
-					let nearbyOwned = this.board.getNearbyInBoundsOfTile(x, y, 1, this.tile);
-					if (nearbyOwned.length)
-						moves.push({from: nearbyOwned[0], to: {x, y}});
-				} else if (this.board.tiles[x][y] === this.tile)
-					moves.push(
-						this.board.getNearbyInBoundsOfTile(x, y, 2, 0)
-							.map(to => ({from: {x, y}, to})));
-			}
-		return moves.flat();
 	}
 
 	applyMove(from, to) {
