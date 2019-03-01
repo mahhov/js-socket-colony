@@ -95,7 +95,6 @@ class PlayerClientInterface extends ClientInterface {
 class BotClientInterface extends ClientInterface {
 	constructor(clientIndex) {
 		super(clientIndex);
-		this.colonyBot = new ColonyBot();
 		this.depth = 1;
 		this.playTimer = 0;
 	}
@@ -120,7 +119,7 @@ class BotClientInterface extends ClientInterface {
 
 	calcPlay() {
 		let board = Board.createFromTiles(this.lastMessage.data.tiles);
-		this.queuedPlay = this.colonyBot.play(board, this.tile, this.depth);
+		this.queuedPlay = ColonyBot.play(board, this.tile, this.depth);
 	}
 }
 
