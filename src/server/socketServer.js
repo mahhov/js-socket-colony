@@ -25,14 +25,16 @@ class Game {
 
 	addClient(client) {
 		this.clients.push(client);
-		if (this.clients.length === NUM_CLIENTS_PER_GAME)
+		if (this.clients.length === NUM_CLIENTS_PER_GAME && this.state === GAME_STATE_ENUM.WAITING_FOR_PLAYERS)
 			this.state = GAME_STATE_ENUM.IN_PROGRESS;
 		return this.clients.length - 1;
 	}
 
 	removeClient(client) {
-		this.state = GAME_STATE_ENUM.ABANDONED; // todo don't abbandon if spectator leaves
-		this.clients = this.clients.filter(clientI => clientI !== client);
+		let index = this.clients.findIndex(clientI => clientI === client);
+		if (index < NUM_CLIENTS_PER_GAME)
+			this.state = GAME_STATE_ENUM.ABANDONED;
+		this.clients.splice(index, 1);
 	}
 
 	play() {
