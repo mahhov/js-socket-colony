@@ -3,6 +3,7 @@ const Rand = require('./Rand');
 const Inputs = require('./Inputs');
 const ColonyBot = require('../ColonyBot');
 const Board = require('../Board');
+const {GAME_STATE_ENUM} = require('../Constants');
 
 const CLIENT_STATE_ENUM = {
 	LOBBY: 0,
@@ -119,7 +120,7 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	isAlive() {
-		return this.game.clients.length >= 2;
+		return this.game.clients.length >= 2 && this.game.state === GAME_STATE_ENUM.IN_PROGRESS;
 	}
 
 	send(message) {
