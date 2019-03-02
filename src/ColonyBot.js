@@ -3,6 +3,8 @@ const Board = require('./Board');
 
 class ColonyBot {
 	static play(board, scoreFunction, tile, depth) {
+		// if (scoreFunction === ColonyBot.scoreCounts && !depth)
+		// 	return ColonyBot.countsEndPlay(board, tile);
 		let scoredMoves = board.getPossibleMoves(tile)
 			.map(move => {
 				let newBoard = ColonyBot.applyMove(board, move.from, move.to, tile);
@@ -15,6 +17,22 @@ class ColonyBot {
 		let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
 	}
+
+	// static countsEndPlay(board, tile) {
+	// 	let boardScore = ColonyBot.scoreCounts(board, tile);
+	// 	let scoredMoves = board.getPossibleMoves(tile)
+	// 		.map(move => {
+	// 			let {from, to} = move;
+	// 			let deltaScore = Board.dist(from, to) === 1;
+	// 			deltaScore += board.getNearbyInBoundsOfTile(to.x, to.y, 1, 3 - tile).length * 2;
+	// 			return {score: boardScore + deltaScore, move};
+	// 		});
+	// 	if (!scoredMoves.length)
+	// 		return {score: boardScore};
+	// 	let maxScore = Math.max(...scoredMoves.map(({score}) => score));
+	// 	let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
+	// 	return maxScoreMoves[randInt(maxScoreMoves.length)];
+	// }
 
 	static applyMove(board, from, to, tile) {
 		let newBoard = Board.createFromTiles(board.tiles);
