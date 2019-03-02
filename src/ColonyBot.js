@@ -3,14 +3,14 @@ const Board = require('./Board');
 
 class ColonyBot {
 	static play(board, tile, depth) {
-		let moves = board.getPossibleMoves(tile);
-		// todo if no moves at this depth
-		let scoredMoves = moves
+		let scoredMoves = board.getPossibleMoves(tile)
 			.map(move => {
 				let newBoard = ColonyBot.applyMove(board, move.from, move.to, tile);
 				let score = ColonyBot.scoreDeep(newBoard, tile, depth);
 				return {score, move};
 			});
+		if (!scoredMoves.length)
+			return {score: ColonyBot.scoreDeep(board, tile, depth)};
 		let maxScore = Math.max(...scoredMoves.map(({score}) => score));
 		let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
@@ -93,5 +93,3 @@ class ColonyBot {
 }
 
 module.exports = ColonyBot;
-
-// todo handle case with no possible moves
