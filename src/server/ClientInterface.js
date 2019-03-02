@@ -100,7 +100,7 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	isAlive() {
-		return this.game.clients.length === 2;
+		return this.game.clients.length >= 2;
 	}
 
 	send(message) {
