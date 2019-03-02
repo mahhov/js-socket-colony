@@ -3,6 +3,7 @@ const HtmlHttpServer = require('./HtmlHttpServer');
 const Rand = require('./Rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
 const Board = require('../Board');
+const ColonyBot = require('../ColonyBot');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
@@ -28,6 +29,18 @@ class Game {
 		this.selected = {};
 	}
 
+	addClient(client) {
+		this.clients.push(client);
+		if (this.clients.length === NUM_CLIENTS_PER_GAME)
+			this.state = GAME_STATE_ENUM.IN_PROGRESS;
+		return this.clients.length - 1;
+	}
+
+	removeClient(client) {
+		this.state = GAME_STATE_ENUM.ABANDONED; // todo don't abbandon if spectator leaves
+		this.clients = this.clients.filter(clientI => clientI !== client);
+	}
+
 	play() {
 		this.clients.forEach(client => client.iter());
 		this.clients[this.turn].play();
@@ -44,7 +57,7 @@ class Game {
 		if (this.board.getPossibleMoves(nextTurn + 1).length)
 			this.turn = nextTurn;
 		else if (!this.board.getPossibleMoves(this.turn + 1).length)
-			this.state=GAME_STATE_ENUM.ENDED;
+			this.state = GAME_STATE_ENUM.ENDED;
 	}
 
 	select(selected) {
@@ -89,13 +102,13 @@ class Server {
 	}
 
 	createPlayerClient(netClient) {
-		let player = new PlayerClientInterface(this.clients.length, netClient);
+		let player = new PlayerClientInterface(netClient);
 		this.clients.push(player);
 		return player;
 	}
 
-	createBotClient() {
-		let bot = new BotClientInterface(this.clients.length);
+	createBotClient(scoreFunction) {
+		let bot = new BotClientInterface(scoreFunction);
 		// todo keep in separate list and don't send unnecessary updates
 		this.clients.push(bot);
 		return bot;
@@ -108,29 +121,23 @@ class Server {
 	createAndJoinGame(client, config) {
 		let game = new Game();
 		this.games.push(game);
-		this.joinGame(client, game);
-		if (config.bot)
-			this.joinGame(this.createBotClient(), game);
+
+		switch (config.bot) {
+			case 1:
+				client.joinGame(game);
+				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
+				break;
+			case 2:
+				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
+				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
+				client.joinGame(game);
+				break;
+			case 0:
+			default:
+				client.joinGame(game);
+				break;
+		}
 		return game;
-	}
-
-	joinGame(client, game) {
-		if (client.game === game)
-			return;
-		if (client.game)
-			this.leaveGame(client);
-		client.game = game;
-		client.state = CLIENT_STATE_ENUM.IN_GAME;
-		game.clients.push(client);
-		if (game.clients.length === NUM_CLIENTS_PER_GAME)
-			game.state = GAME_STATE_ENUM.IN_PROGRESS;
-	}
-
-	leaveGame(client) {
-		client.game.state = GAME_STATE_ENUM.ABANDONED; // todo don't abbandon if spectator leaves
-		client.game.clients = client.game.clients.filter(clientI => clientI !== client);
-		client.game = null;
-		client.state = CLIENT_STATE_ENUM.LOBBY;
 	}
 
 	static inputGame(client, input) {
@@ -156,8 +163,7 @@ class Server {
 		this.clients = this.clients.filter(client => {
 			if (client.isAlive())
 				return true;
-			if (client.game)
-				this.leaveGame(client);
+			client.leaveGame();
 		});
 
 		this.games = this.games.filter(game => game.clients.length);
@@ -189,11 +195,11 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 			break;
 		case 'join-game':
 			if (client && game)
-				server.joinGame(client, game);
+				client.joinGame(game);
 			break;
 		case 'leave-game':
 			if (client)
-				server.leaveGame(client);
+				client.leaveGame();
 			break;
 		case 'input-game':
 			if (client)

@@ -18,13 +18,30 @@ const KEY_ENUM = {
 };
 
 class ClientInterface {
-	constructor(clientIndex) {
+	constructor() {
 		this.id = Rand.randId();
 		this.name = Rand.randName();
 		this.state = CLIENT_STATE_ENUM.LOBBY;
 		this.game = null;
-		this.clientIndex = clientIndex;
-		this.tile = clientIndex + 1;
+	}
+
+	joinGame(game) {
+		if (this.game === game)
+			return;
+		if (this.game)
+			this.leaveGame();
+		this.game = game;
+		this.state = CLIENT_STATE_ENUM.IN_GAME;
+		this.clientIndex = game.addClient(this);
+		this.tile = this.clientIndex + 1;
+	}
+
+	leaveGame() {
+		if (!this.game)
+			return;
+		this.game.removeClient(this);
+		this.game = null;
+		this.state = CLIENT_STATE_ENUM.LOBBY;
 	}
 
 	isAlive() {
@@ -46,8 +63,8 @@ class ClientInterface {
 }
 
 class PlayerClientInterface extends ClientInterface {
-	constructor(clientIndex, netClient) {
-		super(clientIndex);
+	constructor(netClient) {
+		super();
 		this.inputs = new Inputs();
 		this.netClient = netClient;
 	}
@@ -93,8 +110,9 @@ class PlayerClientInterface extends ClientInterface {
 }
 
 class BotClientInterface extends ClientInterface {
-	constructor(clientIndex) {
-		super(clientIndex);
+	constructor(scoreFunction) {
+		super();
+		this.scoreFunction = scoreFunction;
 		this.depth = 1;
 		this.playTimer = 0;
 	}
@@ -119,7 +137,7 @@ class BotClientInterface extends ClientInterface {
 
 	calcPlay() {
 		let board = Board.createFromTiles(this.lastMessage.data.tiles);
-		this.queuedPlay = ColonyBot.play(board, this.tile, this.depth);
+		this.queuedPlay = ColonyBot.play(board, this.scoreFunction, this.tile, this.depth);
 	}
 }
 
