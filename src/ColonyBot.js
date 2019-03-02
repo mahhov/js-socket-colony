@@ -29,7 +29,8 @@ class ColonyBot {
 	}
 
 	static score(board, tile) {
-		return ColonyBot.scoreVulnerability(board, tile);
+		return ColonyBot.scoreCounts(board, tile);
+		// todo configurable bot for game
 	}
 
 	// simply counts tiles per player
