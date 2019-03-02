@@ -31,8 +31,9 @@ class View {
 	}
 
 	addCreateGameListener(listener) {
-		this.$('#create-game-button').addEventListener('click', () => listener({bot: false}));
-		this.$('#create-bot-game-button').addEventListener('click', () => listener({bot: true}));
+		this.$('#create-game-button').addEventListener('click', () => listener({bot: 0}));
+		this.$('#create-bot-game-button').addEventListener('click', () => listener({bot: 1}));
+		this.$('#create-2-bot-game-button').addEventListener('click', () => listener({bot: 2}));
 	}
 
 	addJoinGameListener(listener) {
