@@ -2,15 +2,15 @@ const {randInt} = require('./server/Rand');
 const Board = require('./Board');
 
 class ColonyBot {
-	static play(board, tile, depth) {
+	static play(board, scoreFunction, tile, depth) {
 		let scoredMoves = board.getPossibleMoves(tile)
 			.map(move => {
 				let newBoard = ColonyBot.applyMove(board, move.from, move.to, tile);
-				let score = ColonyBot.scoreDeep(newBoard, tile, depth);
+				let score = ColonyBot.scoreDeep(newBoard, scoreFunction, tile, depth);
 				return {score, move};
 			});
 		if (!scoredMoves.length)
-			return {score: ColonyBot.scoreDeep(board, tile, depth)};
+			return {score: ColonyBot.scoreDeep(board, scoreFunction, tile, depth)};
 		let maxScore = Math.max(...scoredMoves.map(({score}) => score));
 		let maxScoreMoves = scoredMoves.filter(({score}) => score === maxScore);
 		return maxScoreMoves[randInt(maxScoreMoves.length)];
@@ -22,15 +22,10 @@ class ColonyBot {
 		return newBoard;
 	}
 
-	static scoreDeep(board, tile, depth) {
+	static scoreDeep(board, scoreFunction, tile, depth) {
 		if (!depth)
-			return ColonyBot.score(board, tile);
-		return -ColonyBot.play(board, 3 - tile, depth - 1).score;
-	}
-
-	static score(board, tile) {
-		return ColonyBot.scoreCounts(board, tile);
-		// todo configurable bot for game
+			return scoreFunction(board, tile);
+		return -ColonyBot.play(board, scoreFunction, 3 - tile, depth - 1).score;
 	}
 
 	// simply counts tiles per player
