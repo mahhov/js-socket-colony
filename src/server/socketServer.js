@@ -101,17 +101,10 @@ class Server {
 		return this.games.find(({id}) => id === gameId);
 	}
 
-	createPlayerClient(netClient) {
-		let player = new PlayerClientInterface(netClient);
-		this.clients.push(player);
-		return player;
-	}
-
-	createBotClient(scoreFunction) {
-		let bot = new BotClientInterface(scoreFunction);
-		// todo keep in separate list and don't send unnecessary updates
-		this.clients.push(bot);
-		return bot;
+	addClient(client, game) {
+		this.clients.push(client);
+		if (game)
+			client.joinGame(game);
 	}
 
 	createAndJoinGame(client, config) {
@@ -121,11 +114,11 @@ class Server {
 		switch (config.bot) {
 			case 1:
 				client.joinGame(game);
-				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
+				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
 				break;
 			case 2:
-				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
-				this.createBotClient(ColonyBot.scoreCounts).joinGame(game);
+				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
+				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
 				client.joinGame(game);
 				break;
 			case 0:
@@ -176,7 +169,9 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 
 	switch (message.type) {
 		case 'create-client':
-			let {id, name} = server.createPlayerClient(netClient);
+			let createdClient = new PlayerClientInterface(netClient);
+			server.addClient(createdClient);
+			let {id, name} = createdClient;
 			PlayerClientInterface.sendToNetClient(netClient, {type: 'created-client', id, name});
 			break;
 		case 'change-client-name':
