@@ -114,10 +114,6 @@ class Server {
 		return bot;
 	}
 
-	static changeClientName(client, name) {
-		client.name = name;
-	}
-
 	createAndJoinGame(client, config) {
 		let game = new Game();
 		this.games.push(game);
@@ -185,7 +181,7 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 			break;
 		case 'change-client-name':
 			if (client)
-				Server.changeClientName(client, message.name);
+				client.name = message.name;
 			break;
 		case 'create-game':
 			if (client) {
