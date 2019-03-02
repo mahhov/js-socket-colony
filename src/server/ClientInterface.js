@@ -110,10 +110,11 @@ class PlayerClientInterface extends ClientInterface {
 }
 
 class BotClientInterface extends ClientInterface {
-	constructor(scoreFunction) {
+	constructor(scoreFunction, depth = 1, maxPlayTimer = 15) {
 		super();
 		this.scoreFunction = scoreFunction;
-		this.depth = 1;
+		this.depth = depth;
+		this.maxPlayTimer = maxPlayTimer;
 		this.playTimer = 0;
 	}
 
@@ -126,10 +127,11 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	play() {
-		if (!this.playTimer++) {
+		if (!this.playTimer) {
 			this.calcPlay();
 			this.game.select(this.queuedPlay.move.from);
-		} else if (this.playTimer === 15) {
+		}
+		if (this.playTimer++ === this.maxPlayTimer) {
 			this.game.applyMove(this.queuedPlay.move.from, this.queuedPlay.move.to, this.tile);
 			this.playTimer = 0;
 		}
