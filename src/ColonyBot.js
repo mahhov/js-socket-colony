@@ -61,7 +61,7 @@ class ColonyBot {
 	}
 
 	// penalizes tiles surrounded by empty tiles
-	static scorePointsOfAttack(board, tile) {
+	static scorePointsOfAttackMult(board, tile) {
 		let score = [0, 0, 0];
 
 		for (let x = 0; x < board.width; x++)
@@ -69,6 +69,20 @@ class ColonyBot {
 				if (board.tiles[x][y]) {
 					let pointsOfAttack = board.getNearbyInBoundsOfTile(x, y, 1, 0);
 					score[board.tiles[x][y]] += 1 / (pointsOfAttack.length + 1);
+				}
+
+		return score[tile] - score[3 - tile];
+	}
+
+	// penalizes tiles surrounded by empty tiles
+	static scorePointsOfAttackFlat(board, tile) {
+		let score = [0, 0, 0];
+
+		for (let x = 0; x < board.width; x++)
+			for (let y = 0; y < board.height; y++)
+				if (board.tiles[x][y]) {
+					let pointsOfAttack = board.getNearbyInBoundsOfTile(x, y, 1, 0);
+					score[board.tiles[x][y]] += 10 - pointsOfAttack.length;
 				}
 
 		return score[tile] - score[3 - tile];
