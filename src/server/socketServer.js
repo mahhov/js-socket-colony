@@ -4,16 +4,10 @@ const Rand = require('./Rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
 const Board = require('../Board');
 const ColonyBot = require('../ColonyBot');
+const {GAME_STATE_ENUM} = require('../Constants');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
-
-const GAME_STATE_ENUM = {
-	WAITING_FOR_PLAYERS: 0,
-	IN_PROGRESS: 1,
-	ABANDONED: 2,
-	ENDED: 3,
-};
 
 class Game {
 	constructor() {

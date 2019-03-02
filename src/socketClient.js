@@ -3,15 +3,9 @@ const PromiseX = require('./PromiseX');
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
 const DEBUG_GAME_VIEW = false;
+const {GAME_STATE_ENUM} = require('./Constants');
 
-// todo import these enums instead of duplciated definitions
-
-const GAME_STATE_ENUM = {
-	WAITING_FOR_PLAYERS: 0,
-	IN_PROGRESS: 1,
-	ABANDONED: 2,
-	ENDED: 3,
-};
+// todo import these enums instead of duplicated definitions
 
 const INPUT_STATE_ENUM = {
 	RELEASED: 1,

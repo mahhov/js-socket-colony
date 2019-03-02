@@ -1,0 +1,8 @@
+const GAME_STATE_ENUM = {
+	WAITING_FOR_PLAYERS: 0,
+	IN_PROGRESS: 1,
+	ABANDONED: 2,
+	ENDED: 3,
+};
+
+module.exports = {GAME_STATE_ENUM};
