@@ -1,5 +1,5 @@
 class Board {
-	constructor(width = 10, height = 10) {
+	constructor(width = 8, height = 8) {
 		this.width = width;
 		this.height = height;
 		this.tiles = Array(width).fill().map(() => Array(height).fill(0));
