@@ -1,9 +1,8 @@
 const PromiseX = require('./PromiseX');
+const {GAME_STATE_ENUM} = require('./Constants');
 
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
-const DEBUG_GAME_VIEW = false;
-const {GAME_STATE_ENUM} = require('./Constants');
 
 // todo import these enums instead of duplicated definitions
 
@@ -427,17 +426,6 @@ view.addLeaveGameListener(() => client.leaveGame());
 window.addEventListener('load', () => client.createClient());
 
 setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
-
-if (DEBUG_GAME_VIEW) {
-	view.gameMode();
-	gameState.setData({
-		'width': 10,
-		'height': 10,
-		'tiles': [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 0, 0], [0, 0, 2, 2, 2, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 1, 1, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 2]],
-		'turn': 0,
-		'selected': {}
-	});
-}
 
 // todo send input-game only if game started
 // todo hover tile
