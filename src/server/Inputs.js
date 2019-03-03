@@ -35,12 +35,11 @@ class Inputs {
 
 	accumulateInput(input) {
 		this.accumulateKeyInput(input.keys);
-		if (input.mouse.x && input.mouse.y)
-			this.accumulatedInputs.mouse = input.mouse;
+		this.accumulateMouseInput(input.mouse);
 	}
 
-	accumulateKeyInput(input) {
-		Object.entries(input).forEach(([key, value]) => {
+	accumulateKeyInput(keyInput) {
+		Object.entries(keyInput).forEach(([key, value]) => {
 			if (value !== INPUT_STATE_ENUM.RELEASED)
 				this.accumulatedInputs.keys[key] = value;
 
@@ -53,6 +52,11 @@ class Inputs {
 			else if (!this.accumulatedInputs.keys[key])
 				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.RELEASED;
 		});
+	}
+
+	accumulateMouseInput(mouseInput) {
+		if (mouseInput.x && mouseInput.y)
+			this.accumulatedInputs.mouse = mouseInput;
 	}
 
 	applyAccumulatedInputs() {
@@ -86,6 +90,12 @@ class Inputs {
 			this.mouse = this.accumulatedInputs.mouse;
 
 		this.resetAccumulatedInputs();
+	}
+
+	getAccumulatedInputs() {
+		let accumulatedInputs = this.accumulatedInputs;
+		this.resetAccumulatedInputs();
+		return accumulatedInputs;
 	}
 }
 

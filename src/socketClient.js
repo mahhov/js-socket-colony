@@ -1,5 +1,6 @@
 const PromiseX = require('./PromiseX');
 const {GAME_STATE_ENUM} = require('./Constants');
+const Inputs = require('./server/Inputs');
 
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
@@ -120,45 +121,6 @@ class View {
 	}
 }
 
-class Inputs {
-	constructor() {
-		this.resetAccumulatedInputs();
-	}
-
-	resetAccumulatedInputs() {
-		this.accumulatedInputs = {
-			keys: {},
-			mouse: {},
-		};
-	}
-
-	accumulateKeyInput(input) {
-		Object.entries(input).forEach(([key, value]) => {
-			if (value !== INPUT_STATE_ENUM.RELEASED)
-				this.accumulatedInputs.keys[key] = value;
-
-			// null -> release
-			// release -> release
-			// pressed -> tapped
-			// tapped -> tapped
-			else if (this.accumulatedInputs.keys[key] === INPUT_STATE_ENUM.PRESSED)
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.TAPPED;
-			else if (!this.accumulatedInputs.keys[key])
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.RELEASED;
-		});
-	}
-
-	accumulateMouseInput(x, y) {
-		this.accumulatedInputs.mouse = {x, y};
-	}
-
-	getInputs() {
-		let accumulatedInputs = this.accumulatedInputs;
-		this.resetAccumulatedInputs();
-		return accumulatedInputs;
-	}
-}
-
 class GameState {
 	constructor() {
 		this.resetData();
@@ -274,24 +236,25 @@ class Controller {
 			inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.RELEASED}));
 
 		mouseTarget.addEventListener('mousemove', ({offsetX, offsetY}) =>
-			this.mouseInput(offsetX, offsetY));
+			Controller.mouseInput(offsetX, offsetY));
 
 		mouseTarget.addEventListener('mousedown', ({offsetX, offsetY}) => {
-			this.mouseInput(offsetX, offsetY);
+			Controller.mouseInput(offsetX, offsetY);
 			inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.PRESSED});
 		});
 
 		mouseTarget.addEventListener('mouseup', ({offsetX, offsetY}) => {
-			this.mouseInput(offsetX, offsetY);
+			Controller.mouseInput(offsetX, offsetY);
 			inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.RELEASED});
 		});
 	}
 
-	mouseInput(x, y) {
+	static mouseInput(x, y) {
 		// todo should not be directly accessing gameState
 		let {boardLeft, boardTop, boardTileSize, boardWidth, boardHeight} = gameState.getDrawGeometry();
-		inputs.accumulateMouseInput((x - boardLeft) / boardWidth,
-			(y - boardTop) / boardHeight);
+		x = (x - boardLeft) / boardWidth;
+		y = (y - boardTop) / boardHeight;
+		inputs.accumulateMouseInput({x, y});
 	}
 }
 
@@ -387,7 +350,7 @@ class Client {
 				type: 'input-game',
 				clientId: this.clientId,
 				gameId: this.gameId,
-				input: inputs.getInputs(),
+				input: inputs.getAccumulatedInputs(),
 			});
 	}
 }
