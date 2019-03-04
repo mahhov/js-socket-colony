@@ -136,6 +136,8 @@ class GameState {
 
 	draw() {
 		let geometry = this.getDrawGeometry();
+		let textY1 = canvas.height - geometry.bottomPaneHeight + geometry.fontSize;
+		let textY2 = textY1 + geometry.fontSize;
 
 		// clear
 		canvasCtx.fillStyle = 'rgb(0, 0, 0)';
@@ -152,13 +154,19 @@ class GameState {
 
 		// scores
 		let scores = this.getScores();
-		canvasCtx.fillText(`blue: ${scores[0]}`, geometry.textMargin, canvas.height - geometry.bottomPaneHeight + geometry.fontSize);
-		canvasCtx.fillText(`green: ${scores[1]}`, geometry.textMargin, canvas.height - geometry.bottomPaneHeight + geometry.fontSize * 2);
+		canvasCtx.fillText(`blue: ${scores[0]}`, geometry.textMargin, textY1);
+		canvasCtx.fillText(`green: ${scores[1]}`, geometry.textMargin, textY2);
 
 		// turn
 		let turnText = this.getTurnText();
 		let turnTextLeft = canvas.width - geometry.textMargin - canvasCtx.measureText(turnText).width;
-		canvasCtx.fillText(turnText, turnTextLeft, canvas.height - geometry.bottomPaneHeight + geometry.fontSize);
+		canvasCtx.fillText(turnText, turnTextLeft, textY1);
+
+		// elapsed time
+		let time = this.data.elapsedTime;
+		let timeText = `time ${parseInt(time / 60)}:${(time % 60).toString().padStart(2, '0')}`;
+		let timeTextLeft = canvas.width - geometry.textMargin - canvasCtx.measureText(timeText).width;
+		canvasCtx.fillText(timeText, timeTextLeft, textY2);
 	}
 
 	getScores() {
@@ -393,6 +401,6 @@ setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
 // todo send input-game only if game started
 // todo hover tile
 // todo keep displaying lobby until games starts
-// todo gmae timer
+
 // todo board colors
 // todo play 1 computer 2 players

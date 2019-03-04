@@ -25,8 +25,10 @@ class Game {
 
 	addClient(client) {
 		this.clients.push(client);
-		if (this.clients.length === NUM_CLIENTS_PER_GAME && this.state === GAME_STATE_ENUM.WAITING_FOR_PLAYERS)
+		if (this.clients.length === NUM_CLIENTS_PER_GAME && this.state === GAME_STATE_ENUM.WAITING_FOR_PLAYERS) {
 			this.state = GAME_STATE_ENUM.IN_PROGRESS;
+			this.startTime = process.hrtime()[0];
+		}
 		return this.clients.length - 1;
 	}
 
@@ -66,6 +68,7 @@ class Game {
 			height: this.board.height,
 			tiles: this.board.tiles,
 			turn: this.turn,
+			elapsedTime: process.hrtime()[0] - this.startTime,
 			selected: this.selected,
 		};
 	}
