@@ -136,7 +136,7 @@ class Server {
 			case 0:
 			default:
 				client.joinGame(game);
-				if (config.oneComputer)
+				if (config.local)
 					this.addClient(new DummyPlayerClientInterface(client), game);
 				break;
 		}

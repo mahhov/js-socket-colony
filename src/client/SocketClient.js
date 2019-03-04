@@ -25,7 +25,8 @@ class View {
 	}
 
 	addCreateGameListener(listener) {
-		this.$('#create-game-button').addEventListener('click', () => listener({bot: 0}));
+		this.$('#create-human-game-button').addEventListener('click', () => listener({}));
+		this.$('#create-local-game-button').addEventListener('click', () => listener({local: true}));
 		this.$('#create-bot-game-button').addEventListener('click', () => listener({bot: 1}));
 		this.$('#create-2-bot-game-button').addEventListener('click', () => listener({bot: 2}));
 	}
