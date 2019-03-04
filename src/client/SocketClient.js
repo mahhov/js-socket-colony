@@ -396,4 +396,3 @@ setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
 // todo gmae timer
 // todo board colors
 // todo play 1 computer 2 players
-// todo send update after play()

@@ -123,10 +123,6 @@ class BotClientInterface extends ClientInterface {
 		return this.game.clients.length >= 2 && this.game.state === GAME_STATE_ENUM.IN_PROGRESS;
 	}
 
-	send(message) {
-		this.lastMessage = message;
-	}
-
 	play() {
 		if (!this.playTimer) {
 			this.calcPlay();
@@ -139,7 +135,7 @@ class BotClientInterface extends ClientInterface {
 	}
 
 	calcPlay() {
-		let board = Board.createFromTiles(this.lastMessage.data.tiles);
+		let board = Board.createFromTiles(this.game.board.tiles);
 		this.queuedPlay = ColonyBot.play(board, this.scoreFunction, this.tile, this.depth);
 	}
 }

@@ -211,6 +211,8 @@ setInterval(() => {
 	server.games
 		.forEach(game => {
 			let inProgress = game.state === GAME_STATE_ENUM.IN_PROGRESS;
+			if (inProgress)
+				game.play();
 			let clientNames = game.clients.map(({name}) => name);
 			ClientInterface.sendToClients(game.clients, {
 				type: 'game',
@@ -218,8 +220,6 @@ setInterval(() => {
 				data: inProgress && game.getStateDiff(),
 				game: Server.getGameMessage(game),
 			});
-			if (inProgress)
-				game.play();
 		});
 }, UPDATE_GAME_PERIOD_MS);
 
