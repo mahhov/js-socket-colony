@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
 const Rand = require('./Rand');
-const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
+const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, DummyPlayerClientInterface, BotClientInterface} = require('./ClientInterface');
 const Board = require('../colony/Board');
 const ColonyBot = require('../colony/ColonyBot');
 const {GAME_STATE_ENUM} = require('./Constants');
@@ -96,6 +96,10 @@ class Server {
 		return this.clients.find(({id}) => id === clientId);
 	}
 
+	findAllClients(clientId) {
+		return this.clients.filter(({id}) => id === clientId);
+	}
+
 	findGame(gameId) {
 		return this.games.find(({id}) => id === gameId);
 	}
@@ -123,13 +127,11 @@ class Server {
 			case 0:
 			default:
 				client.joinGame(game);
+				if (config.oneComputer)
+					this.addClient(new DummyPlayerClientInterface(client), game);
 				break;
 		}
 		return game;
-	}
-
-	static inputGame(client, input) {
-		client.inputs.accumulateInput(input);
 	}
 
 	getLobbyClients() {
@@ -137,6 +139,7 @@ class Server {
 			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS);
 	}
 
+	// todo inline
 	static getGameMessage(game) {
 		let {id, name, state, clients} = game;
 		return {
@@ -192,8 +195,11 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 				client.leaveGame();
 			break;
 		case 'input-game':
-			if (client)
-				Server.inputGame(client, message.input);
+			if (client) {
+				server
+					.findAllClients(message.clientId)
+					.forEach(client => client.inputs.accumulateInput(message.input));
+			}
 			break;
 		default:
 			console.warn('unrecognized message type:', message.type);

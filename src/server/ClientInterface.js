@@ -110,6 +110,23 @@ class PlayerClientInterface extends ClientInterface {
 	}
 }
 
+class DummyPlayerClientInterface extends PlayerClientInterface {
+	constructor(parentPlayerClientInterface) {
+		super();
+		this.id = parentPlayerClientInterface.id;
+		this.name = parentPlayerClientInterface.name + "-pair";
+		this.inputs = new Inputs();
+		this.parentPlayerClientInterface = parentPlayerClientInterface;
+	}
+
+	isAlive() {
+		return this.parentPlayerClientInterface.isAlive() && this.game.state === GAME_STATE_ENUM.IN_PROGRESS;
+	}
+
+	send(message) {
+	}
+}
+
 class BotClientInterface extends ClientInterface {
 	constructor(scoreFunction, depth = 1, maxPlayTimer = 15) {
 		super();
@@ -140,4 +157,4 @@ class BotClientInterface extends ClientInterface {
 	}
 }
 
-module.exports = {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface};
+module.exports = {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, DummyPlayerClientInterface, BotClientInterface};
