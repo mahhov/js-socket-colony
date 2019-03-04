@@ -62,7 +62,7 @@ class Game {
 		this.selected = selected;
 	}
 
-	getStateDiff() {
+	get stateDiff() {
 		return {
 			width: this.board.width,
 			height: this.board.height,
@@ -70,6 +70,15 @@ class Game {
 			turn: this.turn,
 			elapsedTime: process.hrtime()[0] - this.startTime,
 			selected: this.selected,
+		};
+	}
+
+	get gameMessage() {
+		return {
+			id: this.id,
+			name: this.name,
+			state: this.state,
+			population: this.clients.length,
 		};
 	}
 }
@@ -139,17 +148,6 @@ class Server {
 			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS);
 	}
 
-	// todo inline
-	static getGameMessage(game) {
-		let {id, name, state, clients} = game;
-		return {
-			id,
-			name,
-			state,
-			population: clients.length,
-		};
-	}
-
 	cleanClosedClientsAndGames() {
 		this.clients = this.clients.filter(client => {
 			if (client.isAlive())
@@ -214,7 +212,7 @@ setInterval(() => {
 		type: 'lobby',
 		population: server.clients.length,
 		clientNames,
-		games: server.games.map(Server.getGameMessage),
+		games: server.games.map(game => game.gameMessage),
 	});
 
 	server.games
@@ -226,8 +224,8 @@ setInterval(() => {
 			ClientInterface.sendToClients(game.clients, {
 				type: 'game',
 				clientNames,
-				data: inProgress && game.getStateDiff(),
-				game: Server.getGameMessage(game),
+				data: inProgress && game.stateDiff,
+				game: game.gameMessage,
 			});
 		});
 }, UPDATE_GAME_PERIOD_MS);
