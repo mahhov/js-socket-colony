@@ -20,9 +20,15 @@
 
 	.container {
 		display: flex;
+		flex-direction: column;
 		height: 100%;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.header {
+		margin-bottom: 30px;
+		font-size: 20px;
 	}
 
 	.lobby-container {
@@ -117,6 +123,8 @@
 </style>
 
 <div class="container">
+	<div class="header">JS Colony Online</div>
+
 	<div class="lobby-container">
 		<div class="title">Lobby</div>
 		<div class="username">

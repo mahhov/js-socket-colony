@@ -393,3 +393,7 @@ setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
 // todo send input-game only if game started
 // todo hover tile
 // todo keep displaying lobby until games starts
+// todo gmae timer
+// todo board colors
+// todo play 1 computer 2 players
+// todo send update after play()
