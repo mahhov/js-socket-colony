@@ -1,4 +1,4 @@
-const {randInt} = require('./server/Rand');
+const {randInt} = require('../server/Rand');
 const Board = require('./Board');
 
 class ColonyBot {

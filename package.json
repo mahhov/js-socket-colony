@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "rm -rf out; cp -r src out; inline-requires src/socketClient.js out/socketClient.js; inline-script-tags out/socketClient.html .",
+    "build": "rm -rf out; cp -r src out; inline-requires src/client/SocketClient.js out/client/SocketClient.js; inline-script-tags out/client/SocketClient.html .",
     "install": "npm run build",
-    "start": "node out/server/socketServer",
-    "dev-windows": "npm run build; start cmd //v //k node out/server/socketServer"
+    "start": "node out/server/SocketServer",
+    "dev-windows": "npm run build; start cmd //v //k node out/server/SocketServer"
   },
   "author": "mahhov1",
   "license": "ISC",
   "devDependencies": {},
   "dependencies": {
-    "inline-scripts": "^1.1.0",
+    "inline-scripts": "^1.3.1",
     "ws": "^6.1.3"
   },
   "engines": {

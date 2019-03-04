@@ -1,9 +1,9 @@
 const WebSocket = require('ws');
 const Rand = require('./Rand');
 const Inputs = require('./Inputs');
-const ColonyBot = require('../ColonyBot');
-const Board = require('../Board');
-const {GAME_STATE_ENUM} = require('../Constants');
+const ColonyBot = require('../colony/ColonyBot');
+const Board = require('../colony/Board');
+const {GAME_STATE_ENUM} = require('./Constants');
 
 const CLIENT_STATE_ENUM = {
 	LOBBY: 0,

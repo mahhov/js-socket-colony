@@ -2,7 +2,7 @@ const http = require('http');
 const path = require('path');
 const inlineScripts = require('inline-scripts');
 
-class FileHttpServer {
+class HtmlHttpServer {
 	constructor(relPath, port) {
 		let htmlPath = path.resolve(__dirname, relPath);
 		process.env.SERVER_WS_ENDPIONT = process.env.SERVER_WS_ENDPOINT || 'ws://localhost:5000';
@@ -19,4 +19,4 @@ class FileHttpServer {
 	}
 }
 
-module.exports = FileHttpServer;
+module.exports = HtmlHttpServer;

@@ -1,6 +1,6 @@
 const PromiseX = require('./PromiseX');
-const {GAME_STATE_ENUM} = require('./Constants');
-const Inputs = require('./server/Inputs');
+const {GAME_STATE_ENUM} = require('../server/Constants');
+const Inputs = require('../server/Inputs');
 
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;

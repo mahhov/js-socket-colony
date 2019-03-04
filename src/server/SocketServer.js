@@ -2,9 +2,9 @@ const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
 const Rand = require('./Rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, BotClientInterface} = require('./ClientInterface');
-const Board = require('../Board');
-const ColonyBot = require('../ColonyBot');
-const {GAME_STATE_ENUM} = require('../Constants');
+const Board = require('../colony/Board');
+const ColonyBot = require('../colony/ColonyBot');
+const {GAME_STATE_ENUM} = require('./Constants');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 const NUM_CLIENTS_PER_GAME = 2;
@@ -155,7 +155,7 @@ class Server {
 	}
 }
 
-let htmlHttpServer = new HtmlHttpServer('../socketClient.html', process.env.PORT || 5000);
+let htmlHttpServer = new HtmlHttpServer('../client/SocketClient.html', process.env.PORT || 5000);
 htmlHttpServer.start();
 
 let server = new Server();
