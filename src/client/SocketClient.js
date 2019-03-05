@@ -276,6 +276,7 @@ class NetClient {
 			try {
 				messageHandler(JSON.parse(data));
 			} catch (e) {
+				console.error(e);
 			}
 		});
 	}

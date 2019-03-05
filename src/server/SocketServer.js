@@ -14,6 +14,7 @@ class Net {
 			try {
 				messageHandler(ws, JSON.parse(message));
 			} catch (e) {
+				console.error(e);
 			}
 		}));
 	}
