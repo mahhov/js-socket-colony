@@ -1,87 +1,11 @@
 const WebSocket = require('ws');
 const HtmlHttpServer = require('./HtmlHttpServer');
-const Rand = require('./Rand');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, DummyPlayerClientInterface, BotClientInterface} = require('./ClientInterface');
-const Board = require('../colony/Board');
 const ColonyBot = require('../colony/ColonyBot');
 const {GAME_STATE_ENUM} = require('./Constants');
+const ColonyGame = require('../colony/ColonyGame');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
-const NUM_CLIENTS_PER_GAME = 2;
-
-class Game {
-	constructor() {
-		this.id = Rand.randId();
-		this.name = Rand.randName();
-		this.state = GAME_STATE_ENUM.WAITING_FOR_PLAYERS;
-		this.requiredClients = NUM_CLIENTS_PER_GAME;
-		this.clients = [];
-
-		// todo create sub class ColonyGame
-		this.board = new Board();
-		this.turn = 0;
-		this.selected = {};
-	}
-
-	addClient(client) {
-		this.clients.push(client);
-		if (this.clients.length === NUM_CLIENTS_PER_GAME && this.state === GAME_STATE_ENUM.WAITING_FOR_PLAYERS) {
-			this.state = GAME_STATE_ENUM.IN_PROGRESS;
-			this.startTime = process.hrtime()[0];
-		}
-		return this.clients.length - 1;
-	}
-
-	removeClient(client) {
-		let index = this.clients.findIndex(clientI => clientI === client);
-		if (index < NUM_CLIENTS_PER_GAME)
-			this.state = GAME_STATE_ENUM.ABANDONED;
-		this.clients.splice(index, 1);
-	}
-
-	play() {
-		this.clients.forEach(client => client.iter());
-		this.clients[this.turn].play();
-	}
-
-	applyMove(from, to, tile) {
-		if (this.board.applyMove(from, to, tile))
-			this.changeTurn()
-	}
-
-	changeTurn() {
-		this.selected = {};
-		let nextTurn = ++this.turn % 2;
-		if (this.board.getPossibleMoves(nextTurn + 1).length)
-			this.turn = nextTurn;
-		else if (!this.board.getPossibleMoves(this.turn + 1).length)
-			this.state = GAME_STATE_ENUM.ENDED;
-	}
-
-	select(selected) {
-		this.selected = selected;
-	}
-
-	get stateDiff() {
-		return {
-			width: this.board.width,
-			height: this.board.height,
-			tiles: this.board.tiles,
-			turn: this.turn,
-			elapsedTime: process.hrtime()[0] - this.startTime,
-			selected: this.selected,
-		};
-	}
-
-	get gameMessage() {
-		return {
-			id: this.id,
-			name: this.name,
-			state: this.state,
-			population: this.clients.length,
-		};
-	}
-}
 
 class Net {
 	constructor(server, messageHandler) {
@@ -120,7 +44,7 @@ class Server {
 	}
 
 	createAndJoinGame(client, config) {
-		let game = new Game();
+		let game = new ColonyGame();
 		this.games.push(game);
 
 		switch (config.bot) {
