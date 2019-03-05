@@ -229,7 +229,7 @@ class GameState {
 
 	static getColor(tile, selected) {
 		const COLORS = [
-			[[200, 200, 200], [230, 230, 230]], // background
+			[[220, 220, 220], [240, 240, 240]], // background
 			[[91, 69, 115], [152, 137, 167]], // player 1, normal & light
 			[[170, 165, 96], [247, 244, 200]]]; // player 2, normal & light
 		return COLORS[tile][selected + 0]; // +0 to convert bool to int
@@ -402,6 +402,3 @@ setInterval(() => client.gameInput(), SEND_INPUTS_PERIOD_MS);
 // todo send input-game only if game started
 // todo hover tile
 // todo keep displaying lobby until games starts
-
-// todo board colors
-// todo play 1 computer 2 players
