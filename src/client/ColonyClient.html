@@ -26,7 +26,7 @@
 		justify-content: center;
 	}
 
-	.header {
+	#title {
 		margin-bottom: 30px;
 		font-size: 20px;
 	}
@@ -35,7 +35,7 @@
 		width: 800px;
 	}
 
-	.title {
+	.header {
 		font-size: 20px;
 	}
 
@@ -90,6 +90,10 @@
 		float: right;
 	}
 
+	.lobby-controls button {
+		margin-left: 10px;
+	}
+
 	#game-state {
 		margin-left: 20px;
 	}
@@ -123,10 +127,10 @@
 </style>
 
 <div class="container">
-	<div class="header">JS Colony Online</div>
+	<div id="title"><!--e.g. JS Colony Online--></div>
 
 	<div class="lobby-container">
-		<div class="title">Lobby</div>
+		<div class="header">Lobby</div>
 		<div class="username">
 			username:<input id="username-input">
 		</div>
@@ -138,15 +142,13 @@
 				<!--e.g. <div class="client-item">penguin</div>-->
 			</div>
 		</div>
-		<div class="lobby-controls">
-			<button id="create-human-game-button">play against human</button>
-			<button id="join-game-button">join game</button>
+		<div class="lobby-container">
 			<span class="population-text"><span id="population-count-text">0</span> clients in lobby</span>
 		</div>
-		<div class="lobby-controls">
-			<button id="create-local-game-button">play locally</button>
-			<button id="create-bot-game-button">play against bot</button>
-			<button id="create-2-bot-game-button">watch bot v bot</button>
+		<div id="lobby-controls-container">
+			<!--e.g. <div class="lobby-controls">-->
+			<!--e.g. <button id="create-human-game-button">play against human</button>-->
+			<!--e.g. </div>-->
 		</div>
 	</div>
 

@@ -19,23 +19,33 @@ class View {
 		this.lobbyMode();
 	}
 
+	setTitle(title) {
+		this.$('#title').textContent = title;
+	}
+
+	setLobbyControlButtons(buttonRowss) {
+		buttonRowss.forEach(buttonRow => {
+			let buttonRowEl = document.createElement('div');
+			buttonRowEl.classList.add('lobby-controls');
+			buttonRow.forEach(({id, text, handler}) => {
+				let button = document.createElement('button');
+				button.id = id;
+				button.textContent = text;
+				button.addEventListener('click', () => {
+					if (![...this.$('#game-list').children]
+						.some(gameItem => gameItem.gameId === this.selectedGameId))
+						this.selectedGameId = null;
+					handler(this.selectedGameId);
+				});
+				buttonRowEl.appendChild(button);
+			});
+			this.$('#lobby-controls-container').appendChild(buttonRowEl);
+		});
+	}
+
 	addUsernameChangeListener(listener) {
 		this.$('#username-input').addEventListener('change', () =>
 			listener(this.$('#username-input').value));
-	}
-
-	addCreateGameListener(listener) {
-		this.$('#create-human-game-button').addEventListener('click', () => listener({}));
-		this.$('#create-local-game-button').addEventListener('click', () => listener({local: true}));
-		this.$('#create-bot-game-button').addEventListener('click', () => listener({bot: 1}));
-		this.$('#create-2-bot-game-button').addEventListener('click', () => listener({bot: 2}));
-	}
-
-	addJoinGameListener(listener) {
-		this.$('#join-game-button').addEventListener('click', () => {
-			if ([...this.$('#game-list').children].some(gameItem => gameItem.gameId === this.selectedGameId))
-				listener(this.selectedGameId)
-		});
 	}
 
 	addLeaveGameListener(listener) {
@@ -391,10 +401,41 @@ let netClient = new NetClient(SERVER_URL, message => {
 	}
 });
 
-view.addUsernameChangeListener(name => client.requestUsernameChange(name));
-view.addCreateGameListener(config => client.createGame(config));
-view.addJoinGameListener(gameId => client.joinGame(gameId));
-view.addLeaveGameListener(() => client.leaveGame());
+let initView = () => {
+	view.setTitle('JS Colony Online');
+
+	let buttons = [[{
+		id: "create-human-game-button",
+		text: "play against human",
+		handler: () => client.createGame({}),
+	}, {
+		id: "join-game-button",
+		text: "join game",
+		handler: selectedGameId => {
+			if (selectedGameId)
+				client.joinGame(selectedGameId);
+		},
+	}], [{
+		id: "create-local-game-button",
+		text: "play locally",
+		handler: () => client.createGame({local: true}),
+	}, {
+		id: "create-bot-game-button",
+		text: "play against bot",
+		handler: () => client.createGame({bot: 1}),
+	}, {
+		id: "create-2-bot-game-button",
+		text: "watch bot v bot",
+		handler: () => client.createGame({bot: 2}),
+	}]];
+
+	view.setLobbyControlButtons(buttons);
+
+	view.addUsernameChangeListener(name => client.requestUsernameChange(name));
+	view.addLeaveGameListener(() => client.leaveGame());
+};
+
+initView();
 
 window.addEventListener('load', () => client.createClient());
 
