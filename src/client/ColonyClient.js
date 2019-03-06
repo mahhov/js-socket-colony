@@ -5,14 +5,6 @@ const Inputs = require('../server/Inputs');
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
 
-// todo import these enums instead of duplicated definitions
-
-const INPUT_STATE_ENUM = {
-	RELEASED: 1,
-	PRESSED: 2,
-	TAPPED: 3
-};
-
 class View {
 	constructor() {
 		this.$ = query => document.querySelector(query);
@@ -249,22 +241,22 @@ class GameState {
 class Controller {
 	constructor(mouseTarget) {
 		document.addEventListener('keydown', ({key, repeat}) =>
-			!repeat && inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.PRESSED}));
+			!repeat && inputs.accumulateKeyInput({[key.toLowerCase()]: Inputs.INPUT_STATE.PRESSED}));
 
 		document.addEventListener('keyup', ({key}) =>
-			inputs.accumulateKeyInput({[key.toLowerCase()]: INPUT_STATE_ENUM.RELEASED}));
+			inputs.accumulateKeyInput({[key.toLowerCase()]: Inputs.INPUT_STATE.RELEASED}));
 
 		mouseTarget.addEventListener('mousemove', ({offsetX, offsetY}) =>
 			Controller.mouseInput(offsetX, offsetY));
 
 		mouseTarget.addEventListener('mousedown', ({offsetX, offsetY}) => {
 			Controller.mouseInput(offsetX, offsetY);
-			inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.PRESSED});
+			inputs.accumulateKeyInput({mouse: Inputs.INPUT_STATE.PRESSED});
 		});
 
 		mouseTarget.addEventListener('mouseup', ({offsetX, offsetY}) => {
 			Controller.mouseInput(offsetX, offsetY);
-			inputs.accumulateKeyInput({mouse: INPUT_STATE_ENUM.RELEASED});
+			inputs.accumulateKeyInput({mouse: Inputs.INPUT_STATE.RELEASED});
 		});
 	}
 

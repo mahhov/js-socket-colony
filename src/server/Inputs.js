@@ -1,16 +1,3 @@
-const KEY_STATE_ENUM = {
-	UP: 0,
-	DOWN: 1,
-	PRESSED: 2,
-	TAPPED: 3,
-};
-
-const INPUT_STATE_ENUM = {
-	RELEASED: 1,
-	PRESSED: 2,
-	TAPPED: 3
-};
-
 class Inputs {
 	constructor() {
 		this.keys = {};
@@ -30,7 +17,7 @@ class Inputs {
 	}
 
 	isTriggered(key) {
-		return this.keys[key] === KEY_STATE_ENUM.PRESSED || this.keys[key] === KEY_STATE_ENUM.TAPPED
+		return this.keys[key] === Inputs.KEY_STATE.PRESSED || this.keys[key] === Inputs.KEY_STATE.TAPPED
 	}
 
 	accumulateInput(input) {
@@ -40,17 +27,17 @@ class Inputs {
 
 	accumulateKeyInput(keyInput) {
 		Object.entries(keyInput).forEach(([key, value]) => {
-			if (value !== INPUT_STATE_ENUM.RELEASED)
+			if (value !== Inputs.INPUT_STATE.RELEASED)
 				this.accumulatedInputs.keys[key] = value;
 
 			// null -> release
 			// release -> release
 			// pressed -> tapped
 			// tapped -> tapped
-			else if (this.accumulatedInputs.keys[key] === INPUT_STATE_ENUM.PRESSED)
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.TAPPED;
+			else if (this.accumulatedInputs.keys[key] === Inputs.INPUT_STATE.PRESSED)
+				this.accumulatedInputs.keys[key] = Inputs.INPUT_STATE.TAPPED;
 			else if (!this.accumulatedInputs.keys[key])
-				this.accumulatedInputs.keys[key] = INPUT_STATE_ENUM.RELEASED;
+				this.accumulatedInputs.keys[key] = Inputs.INPUT_STATE.RELEASED;
 		});
 	}
 
@@ -62,24 +49,24 @@ class Inputs {
 	applyAccumulatedInputs() {
 		// age keys
 		Object.entries(this.keys).forEach(([key, value]) => {
-			if (value === KEY_STATE_ENUM.PRESSED)
-				this.keys[key] = KEY_STATE_ENUM.DOWN;
-			else if (value === KEY_STATE_ENUM.TAPPED)
-				this.keys[key] = KEY_STATE_ENUM.UP;
+			if (value === Inputs.KEY_STATE.PRESSED)
+				this.keys[key] = Inputs.KEY_STATE.DOWN;
+			else if (value === Inputs.KEY_STATE.TAPPED)
+				this.keys[key] = Inputs.KEY_STATE.UP;
 		});
 
 		// apply accumulatedInputs to keys
 		Object.entries(this.accumulatedInputs.keys).forEach(([key, value]) => {
 			switch (value) {
-				case INPUT_STATE_ENUM.RELEASED:
-					this.keys[key] = KEY_STATE_ENUM.UP;
+				case Inputs.INPUT_STATE.RELEASED:
+					this.keys[key] = Inputs.KEY_STATE.UP;
 					break;
-				case INPUT_STATE_ENUM.PRESSED:
-					if (this.keys[key] !== KEY_STATE_ENUM.DOWN)
-						this.keys[key] = KEY_STATE_ENUM.PRESSED;
+				case Inputs.INPUT_STATE.PRESSED:
+					if (this.keys[key] !== Inputs.KEY_STATE.DOWN)
+						this.keys[key] = Inputs.KEY_STATE.PRESSED;
 					break;
-				case INPUT_STATE_ENUM.TAPPED:
-					this.keys[key] = KEY_STATE_ENUM.TAPPED;
+				case Inputs.INPUT_STATE.TAPPED:
+					this.keys[key] = Inputs.KEY_STATE.TAPPED;
 					break;
 
 			}
@@ -98,5 +85,18 @@ class Inputs {
 		return accumulatedInputs;
 	}
 }
+
+Inputs.KEY_STATE = {
+	UP: 0,
+	DOWN: 1,
+	PRESSED: 2,
+	TAPPED: 3,
+};
+
+Inputs.INPUT_STATE = {
+	RELEASED: 1,
+	PRESSED: 2,
+	TAPPED: 3
+};
 
 module.exports = Inputs;
