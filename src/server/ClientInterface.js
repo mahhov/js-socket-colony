@@ -114,7 +114,7 @@ class DummyPlayerClientInterface extends PlayerClientInterface {
 	constructor(parentPlayerClientInterface) {
 		super();
 		this.id = parentPlayerClientInterface.id;
-		this.name = parentPlayerClientInterface.name + "-pair";
+		this.name = parentPlayerClientInterface.name + '-pair';
 		this.inputs = new Inputs();
 		this.parentPlayerClientInterface = parentPlayerClientInterface;
 	}
@@ -130,6 +130,7 @@ class DummyPlayerClientInterface extends PlayerClientInterface {
 class BotClientInterface extends ClientInterface {
 	constructor(scoreFunction, depth = 1, maxPlayTimer = 15) {
 		super();
+		this.name += '-bot';
 		this.scoreFunction = scoreFunction;
 		this.depth = depth;
 		this.maxPlayTimer = maxPlayTimer;
