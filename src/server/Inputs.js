@@ -21,7 +21,7 @@ class Inputs {
 	resetAccumulatedInputs() {
 		this.accumulatedInputs = {
 			keys: {},
-			mouse: null,
+			mouse: {},
 		};
 	}
 
