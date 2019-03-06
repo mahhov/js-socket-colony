@@ -84,7 +84,7 @@ class Server {
 	}
 }
 
-let htmlHttpServer = new HtmlHttpServer('../client/SocketClient.html', process.env.PORT || 5000);
+let htmlHttpServer = new HtmlHttpServer('../client/ColonyClient.html', process.env.PORT || 5000);
 htmlHttpServer.start();
 
 let server = new Server();
