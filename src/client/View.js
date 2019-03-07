@@ -3,6 +3,10 @@ const {GAME_STATE_ENUM} = require('../server/Constants');
 class View {
 	constructor() {
 		this.$ = query => document.querySelector(query);
+
+		this.canvas = document.querySelector('canvas');
+		this.canvasCtx = this.canvas.getContext('2d');
+
 		this.lobbyMode();
 	}
 
