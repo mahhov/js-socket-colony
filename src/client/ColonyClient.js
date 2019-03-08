@@ -1,6 +1,7 @@
 const Client = require('./Client');
+const ColonyGameState = require('../colony/ColonyGameState');
 
-let client = new Client();
+let client = new Client(new ColonyGameState());
 
 client.view.setTitle('JS Colony Online');
 

@@ -1,5 +1,4 @@
 const NetClient = require('./NetClient');
-const GameState = require('./GameState');
 const View = require('./View');
 const Controller = require('./Controller');
 
@@ -7,14 +6,14 @@ const SERVER_URL = process.env.SERVER_WS_ENDPIONT;
 const SEND_INPUTS_PERIOD_MS = 1000 / 20;
 
 class Client {
-	constructor() {
+	constructor(gameState) {
 		this.clientId = null;
 		this.gameId = null;
 
 		this.netClient = new NetClient(SERVER_URL, message => this.netListener(message));
-		this.gameState = new GameState();
 		this.view = new View();
 		this.controller = new Controller(this.view.canvas);
+		this.gameState = gameState;
 	}
 
 	netListener(message) {
@@ -94,7 +93,7 @@ class Client {
 	}
 
 	updateGame(data, game) {
-		this.controller.setGeometry(this.gameState.getDrawGeometry(this.view.canvas));
+		this.controller.setGeometry(this.gameState.getMouseTargetGeometry(this.view.canvas));
 		if (data)
 			this.gameState.setData(data);
 		this.gameState.draw(this.view.canvas, this.view.canvasCtx);
