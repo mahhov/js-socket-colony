@@ -1,5 +1,5 @@
 const Game = require('../server/Game');
-const Board = require('./Board');
+const Board = require('./ColonyBoard');
 const {GAME_STATE_ENUM} = require('../server/Constants');
 
 class ColonyGame extends Game {

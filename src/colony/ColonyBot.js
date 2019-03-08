@@ -1,5 +1,5 @@
 const {randInt} = require('../server/Rand');
-const Board = require('./Board');
+const Board = require('./ColonyBoard');
 
 class ColonyBot {
 	static play(board, scoreFunction, tile, depth) {

@@ -1,5 +1,7 @@
-const Client = require('./Client');
-const ColonyGameState = require('../colony/ColonyGameState');
+const Client = require('../client/Client');
+const ColonyGameState = require('./ColonyGameState');
+
+// todo rename or make subclass of Client
 
 let client = new Client(new ColonyGameState());
 
@@ -38,6 +40,8 @@ client.view.addLeaveGameListener(() => client.leaveGame());
 window.addEventListener('load', () => client.createClient());
 
 client.startSendingGameInput();
+
+// no module.exports because this is to be inserted into an HTML <script> tag
 
 // todo send input-game only if game started
 // todo hover tile

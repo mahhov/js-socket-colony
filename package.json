@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "rm -rf out; cp -r src out; inline-requires src/client/ColonyClient.js out/client/ColonyClient.js; inline-script-tags out/client/ColonyClient.html .",
+    "build": "rm -rf out; cp -r src out; inline-requires src/colony/ColonyClient.js out/colony/ColonyClient.js",
     "install": "npm run build",
-    "start": "node out/server/SocketServer",
-    "dev-windows": "npm run build; start cmd //v //k node out/server/SocketServer"
+    "start": "node out/colony/ColonyServer",
+    "dev-windows": "npm run build; start cmd //v //k node out/colony/ColonyServer"
   },
   "author": "mahhov1",
   "license": "ISC",

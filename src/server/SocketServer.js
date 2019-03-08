@@ -1,101 +1,24 @@
-const WebSocket = require('ws');
+const Net = require('./Net');
+const Lobby = require('./Lobby');
 const HtmlHttpServer = require('./HtmlHttpServer');
 const {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, DummyPlayerClientInterface, BotClientInterface} = require('./ClientInterface');
-const ColonyBot = require('../colony/ColonyBot');
 const {GAME_STATE_ENUM} = require('./Constants');
-const ColonyGame = require('../colony/ColonyGame');
 
 const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 
-class Net {
-	constructor(server, messageHandler) {
-		this.wss = new WebSocket.Server({server});
-		this.wss.on('connection', ws => ws.on('message', message => {
-			try {
-				messageHandler(ws, JSON.parse(message));
-			} catch (e) {
-				console.error(e);
-			}
-		}));
-	}
-}
-
-class Server {
-	constructor() {
-		this.clients = [];
-		this.games = [];
-	}
-
-	findClient(clientId) {
-		return this.clients.find(({id}) => id === clientId);
-	}
-
-	findAllClients(clientId) {
-		return this.clients.filter(({id}) => id === clientId);
-	}
-
-	findGame(gameId) {
-		return this.games.find(({id}) => id === gameId);
-	}
-
-	addClient(client, game) {
-		this.clients.push(client);
-		if (game)
-			client.joinGame(game);
-	}
-
-	createAndJoinGame(client, config) {
-		let game = new ColonyGame();
-		this.games.push(game);
-
-		switch (config.bot) {
-			case 1:
-				client.joinGame(game);
-				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
-				break;
-			case 2:
-				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
-				this.addClient(new BotClientInterface(ColonyBot.scoreCounts), game);
-				client.joinGame(game);
-				break;
-			case 0:
-			default:
-				client.joinGame(game);
-				if (config.local)
-					this.addClient(new DummyPlayerClientInterface(client), game);
-				break;
-		}
-		return game;
-	}
-
-	getLobbyClients() {
-		return this.clients
-			.filter(client => client.state === CLIENT_STATE_ENUM.LOBBY || client.game.state !== GAME_STATE_ENUM.IN_PROGRESS);
-	}
-
-	cleanClosedClientsAndGames() {
-		this.clients = this.clients.filter(client => {
-			if (client.isAlive())
-				return true;
-			client.leaveGame();
-		});
-
-		this.games = this.games.filter(game => game.clients.length);
-	}
-}
-
-let htmlHttpServer = new HtmlHttpServer('../client/ColonyClient.html', process.env.PORT || 5000);
+// todo extract ../client/ColonyClient.html
+let htmlHttpServer = new HtmlHttpServer('../client/Client.html', '../colony/ColonyClient.js', process.env.PORT || 5000);
 htmlHttpServer.start();
 
-let server = new Server();
+let lobby = new Lobby();
 let net = new Net(htmlHttpServer.server, (netClient, message) => {
-	let client = server.findClient(message.clientId);
-	let game = server.findGame(message.gameId);
+	let client = lobby.findClient(message.clientId);
+	let game = lobby.findGame(message.gameId);
 
 	switch (message.type) {
 		case 'create-client':
 			let createdClient = new PlayerClientInterface(netClient);
-			server.addClient(createdClient);
+			lobby.addClient(createdClient);
 			let {id, name} = createdClient;
 			PlayerClientInterface.sendToNetClient(netClient, {type: 'created-client', id, name});
 			break;
@@ -105,7 +28,7 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 			break;
 		case 'create-game':
 			if (client) {
-				let {id, name} = server.createAndJoinGame(client, message.config);
+				let {id, name} = lobby.createAndJoinGame(client, message.config);
 				PlayerClientInterface.sendToNetClient(netClient, {type: 'created-game', id, name});
 			}
 			break;
@@ -119,7 +42,7 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 			break;
 		case 'input-game':
 			if (client) {
-				server
+				lobby
 					.findAllClients(message.clientId)
 					.forEach(client => client.inputs.accumulateInput(message.input));
 			}
@@ -130,17 +53,17 @@ let net = new Net(htmlHttpServer.server, (netClient, message) => {
 });
 
 setInterval(() => {
-	server.cleanClosedClientsAndGames();
+	lobby.cleanClosedClientsAndGames();
 
-	let clientNames = server.clients.map(({name}) => name);
-	ClientInterface.sendToClients(server.getLobbyClients(), {
+	let clientNames = lobby.clients.map(({name}) => name);
+	ClientInterface.sendToClients(lobby.getLobbyClients(), {
 		type: 'lobby',
-		population: server.clients.length,
+		population: lobby.clients.length,
 		clientNames,
-		games: server.games.map(game => game.gameMessage),
+		games: lobby.games.map(game => game.gameMessage),
 	});
 
-	server.games
+	lobby.games
 		.forEach(game => {
 			let inProgress = game.state === GAME_STATE_ENUM.IN_PROGRESS;
 			if (inProgress)

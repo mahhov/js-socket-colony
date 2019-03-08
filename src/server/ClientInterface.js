@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const Rand = require('./Rand');
 const Inputs = require('./Inputs');
 const ColonyBot = require('../colony/ColonyBot');
-const Board = require('../colony/Board');
+const Board = require('../colony/ColonyBoard');
 const {GAME_STATE_ENUM} = require('./Constants');
 
 const CLIENT_STATE_ENUM = {
@@ -159,3 +159,5 @@ class BotClientInterface extends ClientInterface {
 }
 
 module.exports = {CLIENT_STATE_ENUM, ClientInterface, PlayerClientInterface, DummyPlayerClientInterface, BotClientInterface};
+
+// todo extract colony specific classes

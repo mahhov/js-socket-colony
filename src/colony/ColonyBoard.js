@@ -1,4 +1,4 @@
-class Board {
+class ColonyBoard {
 	constructor(width = 8, height = 8) {
 		this.width = width;
 		this.height = height;
@@ -8,14 +8,14 @@ class Board {
 	}
 
 	static createFromTiles(tiles) {
-		let board = new Board(tiles.length, tiles[0].length);
+		let board = new ColonyBoard(tiles.length, tiles[0].length);
 		board.tiles = [];
 		tiles.forEach(tileColumn => board.tiles.push([...tileColumn]));
 		return board;
 	}
 
 	applyMove(from, to, tile) {
-		let dist = Board.dist(from, to);
+		let dist = ColonyBoard.dist(from, to);
 		if (isNaN(dist) || dist > 2 || dist === 0 || this.tiles[from.x][from.y] !== tile || this.tiles[to.x][to.y])
 			return;
 		this.propagate(to, tile);
@@ -53,7 +53,7 @@ class Board {
 	}
 
 	getNearbyInBoundsOfTile(x, y, dist, tile) {
-		return Board
+		return ColonyBoard
 			.getNearby(x, y, dist)
 			.filter(({x, y}) => this.inBounds(x, y))
 			.filter(({x, y}) => this.tiles[x][y] === tile);
@@ -79,4 +79,4 @@ class Board {
 	}
 }
 
-module.exports = Board;
+module.exports = ColonyBoard;
