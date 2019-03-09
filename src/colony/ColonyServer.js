@@ -49,5 +49,3 @@ let netHandler = (netClient, message) => {
 let lobby = new Lobby();
 
 new Server(scriptPath, netHandler, lobby).start();
-
-// todo init withh colony configuration, e.g. client html, client.js, and subclassed server/lobby

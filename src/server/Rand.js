@@ -8,5 +8,3 @@ let randName = () => {
 let randInt = max => parseInt(Math.random() * max);
 
 module.exports = {randId, randName, randInt};
-
-// todo move out of server dir

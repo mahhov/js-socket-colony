@@ -1,6 +1,5 @@
 const {ClientInterface} = require('../server/ClientInterface');
 const WebSocket = require('ws');
-const Rand = require('../server/Rand');
 const Inputs = require('../server/Inputs');
 const ColonyBot = require('../colony/ColonyBot');
 const Board = require('../colony/ColonyBoard');
