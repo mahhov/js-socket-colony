@@ -1,8 +1,9 @@
+const path = require('path');
 const Lobby = require('./ColonyLobby');
 const {PlayerClientInterface} = require('./ColonyClientInterface');
 const socketServerInit = require('../server/SocketServer');
 
-let lobby = new Lobby();
+let scriptPath = path.resolve(__dirname, './ColonyClient.js');
 
 let netHandler = (netClient, message) => {
 	let client = lobby.findClient(message.clientId);
@@ -45,6 +46,8 @@ let netHandler = (netClient, message) => {
 	}
 };
 
-socketServerInit(lobby, netHandler);
+let lobby = new Lobby();
+
+socketServerInit(scriptPath, netHandler, lobby);
 
 // todo init withh colony configuration, e.g. client html, client.js, and subclassed server/lobby

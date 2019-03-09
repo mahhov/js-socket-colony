@@ -4,9 +4,7 @@ const http = require('http');
 const inlineScripts = require('inline-scripts');
 
 class HtmlHttpServer {
-	constructor(htmlRelPath, scriptRelPath, port) {
-		let htmlPath = path.resolve(__dirname, htmlRelPath);
-		let scriptPath = path.resolve(__dirname, scriptRelPath);
+	constructor(htmlPath, scriptPath, port) {
 		process.env.SERVER_WS_ENDPIONT = process.env.SERVER_WS_ENDPOINT || 'ws://localhost:5000';
 		let htmlRead_ = fs.readFile(htmlPath, 'utf8');
 		let scriptRead_ = inlineScripts.inlineEnvironmentVariables(scriptPath);

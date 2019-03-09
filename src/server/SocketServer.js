@@ -1,3 +1,4 @@
+const path = require('path');
 const Net = require('./Net');
 const Lobby = require('./Lobby');
 const HtmlHttpServer = require('./HtmlHttpServer');
@@ -5,12 +6,12 @@ const {ClientInterface, PlayerClientInterface} = require('./ClientInterface');
 const {GAME_STATE_ENUM} = require('./Constants');
 
 // todo make class
-// todo paramaterize colonyClient.js
 
-let init = (lobby, netHandler) => {
+let init = (scriptPath, netHandler, lobby) => {
 	const UPDATE_GAME_PERIOD_MS = 1000 / 50;
 
-	let htmlHttpServer = new HtmlHttpServer('../client/Client.html', '../colony/ColonyClient.js', process.env.PORT || 5000);
+	let htmlPath = path.resolve(__dirname, '../client/Client.html');
+	let htmlHttpServer = new HtmlHttpServer(htmlPath, scriptPath, process.env.PORT || 5000);
 	htmlHttpServer.start();
 
 	let net = new Net(htmlHttpServer.server, netHandler);
